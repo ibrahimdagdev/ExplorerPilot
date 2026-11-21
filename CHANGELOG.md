@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-beta.1 — 2026-11-22
+
+### Fixed / improved
+- Scheduled Scans: `SkippedBusy` defers NextRun (BusyRetryDelay) instead of silent per-tick retry churn
+- Scheduled Scans: run gate prevents overlapping timer/RunNow executions and CTS dispose races
+- Scheduled Scans: shutdown cancels the active run before awaiting the poll loop
+- Scheduled Scans: clock/offset jump recalculates NextRunUtc; snapshot id only updates on success
+- Dashboard: refreshes on snapshot catalog changes while visible; incomplete scans use `!IsComplete`
+- Scheduled Scans UI: recycling virtualization and long-path tooltip on editor
+
+### Notes
+- Development build on `feature/v2.0-beta-stabilization`; no GitHub Release for this beta
+- Focused on reliability/integration — no new major modules
+
 ## 2.0.0-alpha.3 — 2026-11-22
 
 ### Added

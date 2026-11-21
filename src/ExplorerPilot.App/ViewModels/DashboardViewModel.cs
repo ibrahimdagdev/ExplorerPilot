@@ -15,12 +15,13 @@ namespace ExplorerPilot.App.ViewModels;
 /// <summary>
 /// Professional dashboard over drives + last scan + optional snapshot/cleanup previews.
 /// </summary>
-public sealed partial class DashboardViewModel : ObservableObject
+public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 {
     private readonly IDashboardSummaryService _summaryService;
     private readonly ISnapshotStore _snapshotStore;
     private readonly ISnapshotTrendService _trendService;
     private readonly ICleanupRecommendationService _cleanupService;
+    private readonly ISnapshotCatalogNotifier _catalogNotifier;
     private readonly ILocalizationService _localization;
     private readonly ILogger<DashboardViewModel> _logger;
 
@@ -38,6 +39,7 @@ public sealed partial class DashboardViewModel : ObservableObject
         ISnapshotStore snapshotStore,
         ISnapshotTrendService trendService,
         ICleanupRecommendationService cleanupService,
+        ISnapshotCatalogNotifier catalogNotifier,
         ILocalizationService localization,
         ILogger<DashboardViewModel> logger)
     {
@@ -45,8 +47,42 @@ public sealed partial class DashboardViewModel : ObservableObject
         _snapshotStore = snapshotStore;
         _trendService = trendService;
         _cleanupService = cleanupService;
+        _catalogNotifier = catalogNotifier;
         _localization = localization;
         _logger = logger;
+        _catalogNotifier.CatalogChanged += OnCatalogChanged;
+    }
+
+    public void Dispose()
+    {
+        _catalogNotifier.CatalogChanged -= OnCatalogChanged;
+        try
+        {
+            _refreshCts?.Cancel();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        _refreshCts?.Dispose();
+    }
+
+    private void OnCatalogChanged(object? sender, EventArgs e)
+    {
+        if (!_isVisible)
+        {
+            return;
+        }
+
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            _ = RefreshAsync();
+            return;
+        }
+
+        _ = dispatcher.BeginInvoke(new Action(() => _ = RefreshAsync()));
     }
 
     public ObservableCollection<DashboardDriveRowViewModel> DriveRows { get; } = [];

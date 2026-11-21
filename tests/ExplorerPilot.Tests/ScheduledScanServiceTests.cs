@@ -64,9 +64,13 @@ public sealed class ScheduledScanServiceTests
     }
 
     [Fact]
-    public async Task ConcurrencyGuard_SkippedBusy_DoesNotAdvanceSchedule()
+    public async Task ConcurrencyGuard_SkippedBusy_DefersNextRun_NotImmediateRetry()
     {
-        await using var harness = await Harness.CreateAsync();
+        await using var harness = await Harness.CreateAsync(new ScheduledScanOptions
+        {
+            PollInterval = TimeSpan.FromHours(1),
+            BusyRetryDelay = TimeSpan.FromMinutes(3)
+        });
         await harness.Service.StartAsync();
         var plan = await harness.Service.AddAsync(new ScheduledScanDefinition
         {
@@ -80,13 +84,57 @@ public sealed class ScheduledScanServiceTests
         var executor = new RecordingExecutor { Outcome = ScheduledScanRunOutcome.SkippedBusy };
         harness.Service.Executor = executor;
 
-        var before = harness.Service.Plans.Single(p => p.Id == plan.Id).NextRunUtc;
+        var before = DateTimeOffset.UtcNow;
         var result = await harness.Service.RunNowAsync(plan.Id);
         Assert.Equal(ScheduledScanRunOutcome.SkippedBusy, result.Outcome);
 
         var after = harness.Service.Plans.Single(p => p.Id == plan.Id);
         Assert.Equal(ScheduledScanRunOutcome.SkippedBusy, after.LastOutcome);
-        Assert.Equal(before, after.NextRunUtc);
+        Assert.NotNull(after.NextRunUtc);
+        Assert.True(after.NextRunUtc >= before.AddMinutes(2.5));
+        Assert.True(after.NextRunUtc <= before.AddMinutes(3.5));
+        await harness.Service.StopAsync();
+    }
+
+    [Fact]
+    public async Task ConcurrentRunNow_SecondCall_SkippedBusy_WithoutDoubleExecutor()
+    {
+        await using var harness = await Harness.CreateAsync();
+        await harness.Service.StartAsync();
+        var plan = await harness.Service.AddAsync(new ScheduledScanDefinition
+        {
+            Name = "Gate",
+            TargetPath = harness.Target,
+            Frequency = ScheduledScanFrequency.Manual,
+            IsEnabled = true
+        });
+
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var executor = new RecordingExecutor
+        {
+            Handler = async (p, ct) =>
+            {
+                started.TrySetResult();
+                await release.Task.WaitAsync(ct);
+                return new ScheduledScanRunResult
+                {
+                    PlanId = p.Id,
+                    Outcome = ScheduledScanRunOutcome.Succeeded,
+                    SnapshotId = Guid.NewGuid()
+                };
+            }
+        };
+        harness.Service.Executor = executor;
+
+        var first = harness.Service.RunNowAsync(plan.Id);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var second = await harness.Service.RunNowAsync(plan.Id);
+        Assert.Equal(ScheduledScanRunOutcome.SkippedBusy, second.Outcome);
+        release.TrySetResult();
+        var firstResult = await first.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(ScheduledScanRunOutcome.Succeeded, firstResult.Outcome);
+        Assert.Single(executor.Calls);
         await harness.Service.StopAsync();
     }
 
@@ -283,7 +331,7 @@ public sealed class ScheduledScanServiceTests
         public ScheduledScanService Service { get; }
         public string Target { get; }
 
-        public static async Task<Harness> CreateAsync()
+        public static async Task<Harness> CreateAsync(ScheduledScanOptions? options = null)
         {
             var temp = TemporaryDirectory.Create();
             var target = Path.Combine(temp.Path, "scan-root");
@@ -293,7 +341,7 @@ public sealed class ScheduledScanServiceTests
             var store = new ScheduledScanStore(storePath);
             var service = new ScheduledScanService(
                 store,
-                options: new ScheduledScanOptions { PollInterval = TimeSpan.FromHours(1) },
+                options: options ?? new ScheduledScanOptions { PollInterval = TimeSpan.FromHours(1) },
                 timeZone: TimeZoneInfo.Utc);
             return new Harness(temp, store, service, target);
         }

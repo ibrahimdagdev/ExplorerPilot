@@ -2787,7 +2787,9 @@
                                 <ListBox Grid.Column="0" ItemsSource="{Binding ScheduledScans.Plans}"
                                          SelectedItem="{Binding ScheduledScans.SelectedPlan, Mode=TwoWay}"
                                          Margin="0,0,10,0"
-                                         VirtualizingPanel.IsVirtualizing="True">
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="4">
@@ -2823,7 +2825,10 @@
                                             <DockPanel Margin="0,0,0,8">
                                                 <Button DockPanel.Dock="Right" Content="{DynamicResource Scheduled_Browse}" Style="{StaticResource SecondaryButtonStyle}"
                                                         Command="{Binding ScheduledScans.BrowseTargetCommand}" Margin="8,0,0,0" />
-                                                <TextBox Text="{Binding ScheduledScans.EditorTargetPath, UpdateSourceTrigger=PropertyChanged}" />
+                                                <TextBox Text="{Binding ScheduledScans.EditorTargetPath, UpdateSourceTrigger=PropertyChanged}"
+                                                         TextWrapping="NoWrap"
+                                                         HorizontalScrollBarVisibility="Auto"
+                                                         ToolTip="{Binding ScheduledScans.EditorTargetPath}" />
                                             </DockPanel>
                                             <TextBlock Text="{DynamicResource Scheduled_Frequency}" Style="{StaticResource MetricLabelStyle}" />
                                             <ComboBox ItemsSource="{Binding ScheduledScans.FrequencyOptions}"

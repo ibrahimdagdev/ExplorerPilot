@@ -15,12 +15,16 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
     private readonly TimeZoneInfo _timeZone;
     private readonly object _sync = new();
     private readonly List<ScheduledScanDefinition> _plans = [];
+    private readonly SemaphoreSlim _runGate = new(1, 1);
 
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
     private CancellationTokenSource? _activeRunCts;
     private int _persistVersion;
     private bool _started;
+    private bool _disposed;
+    private DateTimeOffset? _lastTickUtc;
+    private TimeSpan _lastUtcOffset;
 
     public ScheduledScanService(
         IScheduledScanStore store,
@@ -32,6 +36,7 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
         _logger = logger;
         _options = options ?? new ScheduledScanOptions();
         _timeZone = timeZone ?? TimeZoneInfo.Local;
+        _lastUtcOffset = _timeZone.GetUtcOffset(DateTime.UtcNow);
     }
 
     public IReadOnlyList<ScheduledScanDefinition> Plans
@@ -76,7 +81,18 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
 
     public async Task StopAsync()
     {
-        _loopCts?.Cancel();
+        // Cancel the in-flight scan first so the poll loop can unwind quickly.
+        await CancelActiveAsync().ConfigureAwait(false);
+
+        try
+        {
+            _loopCts?.Cancel();
+        }
+        catch
+        {
+            // ignore
+        }
+
         if (_loopTask is not null)
         {
             try
@@ -88,14 +104,23 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
             }
         }
 
-        await CancelActiveAsync().ConfigureAwait(false);
         _started = false;
         _logger?.LogInformation("Scheduled scan service stopped");
     }
 
-    public async ValueTask DisposeAsync() => await StopAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
 
-    public void Dispose() => StopAsync().GetAwaiter().GetResult();
+        _disposed = true;
+        await StopAsync().ConfigureAwait(false);
+        _runGate.Dispose();
+    }
+
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
     public async Task<ScheduledScanDefinition> AddAsync(
         ScheduledScanDefinition plan,
@@ -236,6 +261,8 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
         lock (_sync)
         {
             var now = DateTimeOffset.UtcNow;
+            MaybeRecalculateForClockChange_NoLock(now);
+
             due = _plans
                 .Where(p => p.IsEnabled
                             && p.Frequency != ScheduledScanFrequency.Manual
@@ -243,6 +270,8 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
                             && next <= now)
                 .Select(Clone)
                 .ToList();
+
+            _lastTickUtc = now;
         }
 
         foreach (var plan in due)
@@ -256,60 +285,91 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
         ScheduledScanDefinition plan,
         CancellationToken cancellationToken)
     {
-        var executor = Executor;
-        if (executor is null)
+        // Serialize RunNow + timer ticks so CTS disposal cannot race and the same plan
+        // cannot start twice. A second caller gets SkippedBusy without touching the executor.
+        if (!await _runGate.WaitAsync(0).ConfigureAwait(false))
         {
-            var skipped = new ScheduledScanRunResult
+            var busy = new ScheduledScanRunResult
             {
                 PlanId = plan.Id,
-                Outcome = ScheduledScanRunOutcome.Failed,
-                ErrorMessage = "Scan executor is not attached."
+                Outcome = ScheduledScanRunOutcome.SkippedBusy,
+                ErrorMessage = "Another scheduled run is already in progress."
             };
-            await ApplyRunResultAsync(plan.Id, skipped, recalculateNext: true, cancellationToken)
-                .ConfigureAwait(false);
-            return skipped;
+            await ApplyRunResultAsync(plan.Id, busy, cancellationToken).ConfigureAwait(false);
+            return busy;
         }
 
-        _activeRunCts?.Dispose();
-        _activeRunCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        ScheduledScanRunResult result;
         try
         {
-            result = await executor.ExecuteAsync(plan, _activeRunCts.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            result = new ScheduledScanRunResult
-            {
-                PlanId = plan.Id,
-                Outcome = ScheduledScanRunOutcome.Cancelled
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Scheduled scan {PlanId} failed", plan.Id);
-            result = new ScheduledScanRunResult
-            {
-                PlanId = plan.Id,
-                Outcome = ScheduledScanRunOutcome.Failed,
-                ErrorMessage = ex.Message
-            };
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        await ApplyRunResultAsync(
-                plan.Id,
-                result,
-                recalculateNext: result.Outcome != ScheduledScanRunOutcome.SkippedBusy,
-                cancellationToken)
-            .ConfigureAwait(false);
+            // Plan may have been deleted/edited while waiting — re-check under lock.
+            lock (_sync)
+            {
+                if (_plans.All(p => p.Id != plan.Id))
+                {
+                    return new ScheduledScanRunResult
+                    {
+                        PlanId = plan.Id,
+                        Outcome = ScheduledScanRunOutcome.Cancelled,
+                        ErrorMessage = "Plan was deleted before the run started."
+                    };
+                }
+            }
 
-        return result;
+            var executor = Executor;
+            if (executor is null)
+            {
+                var skipped = new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Failed,
+                    ErrorMessage = "Scan executor is not attached."
+                };
+                await ApplyRunResultAsync(plan.Id, skipped, cancellationToken).ConfigureAwait(false);
+                return skipped;
+            }
+
+            var previousCts = _activeRunCts;
+            _activeRunCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            previousCts?.Dispose();
+
+            ScheduledScanRunResult result;
+            try
+            {
+                result = await executor.ExecuteAsync(plan, _activeRunCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                result = new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Cancelled
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Scheduled scan {PlanId} failed", plan.Id);
+                result = new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Failed,
+                    ErrorMessage = ex.Message
+                };
+            }
+
+            await ApplyRunResultAsync(plan.Id, result, cancellationToken).ConfigureAwait(false);
+            return result;
+        }
+        finally
+        {
+            _runGate.Release();
+        }
     }
 
     private async Task ApplyRunResultAsync(
         Guid planId,
         ScheduledScanRunResult result,
-        bool recalculateNext,
         CancellationToken cancellationToken)
     {
         lock (_sync)
@@ -323,10 +383,23 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
             plan.LastRunUtc = result.CompletedAtUtc;
             plan.LastOutcome = result.Outcome;
             plan.LastError = result.ErrorMessage;
-            plan.LastSnapshotId = result.SnapshotId ?? plan.LastSnapshotId;
+            // SnapshotFailed / Incomplete keep the previous successful snapshot id (if any).
+            if (result.SnapshotId is { } snapId)
+            {
+                plan.LastSnapshotId = snapId;
+            }
+
             plan.MissedWhileClosed = false;
             plan.UpdatedAtUtc = DateTimeOffset.UtcNow;
-            if (recalculateNext)
+
+            if (result.Outcome == ScheduledScanRunOutcome.SkippedBusy)
+            {
+                var delay = _options.BusyRetryDelay <= TimeSpan.Zero
+                    ? TimeSpan.FromMinutes(2)
+                    : _options.BusyRetryDelay;
+                plan.NextRunUtc = DateTimeOffset.UtcNow + delay;
+            }
+            else
             {
                 plan.NextRunUtc = ScheduledScanScheduleMath.ComputeNextRunUtc(
                     plan,
@@ -337,6 +410,30 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
 
         await PersistAsync(cancellationToken).ConfigureAwait(false);
         RaiseChanged();
+    }
+
+    private void MaybeRecalculateForClockChange_NoLock(DateTimeOffset now)
+    {
+        var offset = _timeZone.GetUtcOffset(now.UtcDateTime);
+        var offsetChanged = offset != _lastUtcOffset;
+        var jumped = false;
+        if (_lastTickUtc is { } previous)
+        {
+            var delta = now - previous;
+            jumped = delta < TimeSpan.Zero || delta > _options.ClockJumpThreshold;
+        }
+
+        if (!offsetChanged && !jumped)
+        {
+            return;
+        }
+
+        _lastUtcOffset = offset;
+        _logger?.LogInformation(
+            "Recalculating scheduled next-runs after clock/offset change (jumped={Jumped}, offsetChanged={OffsetChanged})",
+            jumped,
+            offsetChanged);
+        RecalculateNextRuns_NoLock(now);
     }
 
     private void MarkMissedWhileClosed_NoLock(DateTimeOffset utcNow)

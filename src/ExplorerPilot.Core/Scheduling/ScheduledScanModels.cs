@@ -65,6 +65,17 @@ public sealed class ScheduledScanOptions
     /// <summary>How often the in-process timer checks due plans.</summary>
     public TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// When a due plan is skipped because another scan is busy, defer NextRunUtc by this amount
+    /// instead of leaving the plan immediately due (avoids silent per-tick retry churn).
+    /// </summary>
+    public TimeSpan BusyRetryDelay { get; init; } = TimeSpan.FromMinutes(2);
+
+    /// <summary>
+    /// If wall-clock jumps more than this between ticks (or goes backwards), recalculate all NextRunUtc.
+    /// </summary>
+    public TimeSpan ClockJumpThreshold { get; init; } = TimeSpan.FromMinutes(5);
+
     /// <summary>When true, successful completed scheduled scans save a snapshot.</summary>
     public bool AutoSnapshotOnSuccess { get; init; } = true;
 }

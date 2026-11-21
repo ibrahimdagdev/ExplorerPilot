@@ -544,9 +544,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
     private void SyncDashboardInputs()
     {
-        var incomplete = LastResult is null
-            ? false
-            : LastResult.WasCancelled || LastResult.FinalStatus == ScanPhase.Failed;
+        var incomplete = LastResult is not null && !LastResult.IsComplete;
         Dashboard.BindInputs(
             _discoveredDrives,
             LastResult,
@@ -1172,7 +1170,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         HasScanResults = true;
 
         _scanSessionId = Guid.NewGuid();
-        var incomplete = result.WasCancelled || result.FinalStatus == ScanPhase.Failed;
+        var incomplete = !result.IsComplete;
         Search.AttachScan(result.RootNode, _scanSessionId, incomplete);
         Duplicates.AttachScan(result.RootNode, _scanSessionId, incomplete);
         Treemap.AttachScan(result.RootNode, _scanSessionId, incomplete);
@@ -1793,6 +1791,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         _scheduledScans.Executor = null;
         Trends.Dispose();
         Comparison.Dispose();
+        Dashboard.Dispose();
 
         try { _scanCts?.Cancel(); } catch { /* ignore */ }
         try { _exportCts?.Cancel(); } catch { /* ignore */ }

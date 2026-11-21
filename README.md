@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Application** | ExplorerPilot |
-| **Version** | 2.0.0-alpha.3 (development) / 1.1.0 (latest release) |
+| **Version** | 2.0.0-beta.1 (development) / 1.1.0 (latest release) |
 | **Developer** | İbrahim Dağ |
 | **Publisher** | Tasarisoft |
 | **Website** | [tasarisoft.com](https://tasarisoft.com) |
