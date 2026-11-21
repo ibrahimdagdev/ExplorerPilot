@@ -1,0 +1,93 @@
+## Visual Studio / .NET
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+TestResults/
+*.log
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+## DotCover / coverage
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+## NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+## ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## OS / editors
+.DS_Store
+.idea/
+*.swp
+*~
+
+## Publish / installers
+publish/
+*.msi
+*.msix
+*.appx
+*.appxbundle
+
+## Secrets / local config
+*.local.json
+appsettings.*.local.json
+.env
+.env.*
+*.pfx
+*.p12
+*.snk
+secrets/
+credentials*.json
+
+## Local user / temp data (never commit)
+**/AppData/
+ExplorerPilot-live-*/
+ExplorerPilot-measure-*/
+*.tmp
+*.temp
+~$*
+
+## Cursor / tooling
+.cursor/
+.cursorignore
+agent-transcripts/

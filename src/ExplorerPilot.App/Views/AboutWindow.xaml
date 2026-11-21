@@ -1,0 +1,120 @@
+<Window x:Class="ExplorerPilot.App.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ExplorerPilot.App.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Width="440"
+        Height="400"
+        MinWidth="420"
+        MinHeight="380"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        d:DataContext="{d:DesignInstance Type=vm:AboutViewModel}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Brand header -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center">
+            <Border Width="48"
+                    Height="48"
+                    CornerRadius="12"
+                    Background="{DynamicResource AccentBrush}"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,14">
+                <Viewbox Width="22" Height="22" Stretch="Uniform">
+                    <Path Fill="{DynamicResource AccentForegroundBrush}"
+                          Data="M2,2 H10 V6 H14 V14 H2 Z M4,4 V12 H12 V8 H8 V4 Z" />
+                </Viewbox>
+            </Border>
+
+            <TextBlock Text="{Binding ProductName}"
+                       Style="{StaticResource BrandTitleStyle}"
+                       FontSize="22"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Text="{Binding VersionDisplay}"
+                       Style="{StaticResource MutedTextStyle}"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Margin="0,6,0,0" />
+
+            <TextBlock Text="{Binding Description}"
+                       Style="{StaticResource MutedTextStyle}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="360"
+                       Margin="0,10,0,0" />
+        </StackPanel>
+
+        <!-- Details -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="14,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding DeveloperLabel}" Style="{StaticResource MetricLabelStyle}" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Developer}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding PublisherLabel}" Style="{StaticResource MetricLabelStyle}" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Publisher}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding WebsiteLabel}" Style="{StaticResource MetricLabelStyle}" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center">
+                    <Hyperlink Command="{Binding OpenWebsiteCommand}"
+                               Foreground="{DynamicResource AccentBrush}"
+                               TextDecorations="None">
+                        <Run Text="{Binding WebsiteDisplay, Mode=OneWay}" />
+                    </Hyperlink>
+                </TextBlock>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding PlatformLabel}" Style="{StaticResource MetricLabelStyle}" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding Platform}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="{Binding LicenseLabel}" Style="{StaticResource MetricLabelStyle}" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="8" Grid.Column="2" Text="{Binding LicenseValue}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="4"
+                   Text="{Binding Copyright}"
+                   Style="{StaticResource MutedTextStyle}"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center"
+                   TextWrapping="Wrap" />
+
+        <Button Grid.Row="6"
+                Content="{Binding CloseButtonText}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                HorizontalAlignment="Right"
+                MinWidth="96"
+                Command="{Binding CloseCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" />
+    </Grid>
+</Window>

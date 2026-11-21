@@ -1,0 +1,85 @@
+<Window x:Class="ExplorerPilot.App.Views.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ExplorerPilot"
+        Width="460"
+        Height="280"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True">
+
+    <Border Background="#FF131923"
+            CornerRadius="12"
+            BorderBrush="#FF2A3444"
+            BorderThickness="1"
+            SnapsToDevicePixels="True">
+        <Grid Margin="32,28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border Width="48"
+                        Height="48"
+                        CornerRadius="12"
+                        Background="#FF3B82F6"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,18">
+                    <Viewbox Width="22" Height="22" Stretch="Uniform">
+                        <Path Fill="White"
+                              Data="M2,2 H10 V6 H14 V14 H2 Z M4,4 V12 H12 V8 H8 V4 Z" />
+                    </Viewbox>
+                </Border>
+
+                <TextBlock x:Name="TitleText"
+                           Text="ExplorerPilot"
+                           FontFamily="Segoe UI"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           Foreground="#FFF1F5F9"
+                           HorizontalAlignment="Center" />
+
+                <TextBlock x:Name="SubtitleText"
+                           Text="Explore your storage. Take control."
+                           FontFamily="Segoe UI"
+                           FontSize="13"
+                           Foreground="#FFAAB4C3"
+                           HorizontalAlignment="Center"
+                           Margin="0,8,0,0"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                <ProgressBar IsIndeterminate="True"
+                             Height="4"
+                             Foreground="#FF3B82F6"
+                             Background="#FF1E293B"
+                             BorderThickness="0" />
+
+                <TextBlock Text="{Binding StatusText, RelativeSource={RelativeSource AncestorType=Window}}"
+                           FontFamily="Segoe UI"
+                           FontSize="12"
+                           Foreground="#FF94A3B8"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,12,0,0"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <TextBlock x:Name="VersionTextBlock"
+                       Grid.Row="2"
+                       FontFamily="Segoe UI"
+                       FontSize="11"
+                       Foreground="#FF64748B"
+                       HorizontalAlignment="Center"
+                       Margin="0,20,0,0" />
+        </Grid>
+    </Border>
+</Window>

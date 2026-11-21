@@ -1,0 +1,151 @@
+<Window x:Class="ExplorerPilot.App.Views.ReportExportOptionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ExplorerPilot.App.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Width="460"
+        SizeToContent="Height"
+        MinWidth="420"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        d:DataContext="{d:DesignInstance Type=vm:ReportExportOptionsViewModel}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding WindowTitle}"
+                       Style="{StaticResource BrandTitleStyle}"
+                       FontSize="20" />
+            <TextBlock Text="{Binding Subtitle}"
+                       Style="{StaticResource MutedTextStyle}"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="14,12">
+            <StackPanel>
+                <TextBlock Text="{Binding FormatLabel}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,10"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <RadioButton Content="{Binding FormatCsvLabel}"
+                             IsChecked="{Binding IsCsvSelected, Mode=TwoWay}"
+                             Margin="0,0,0,6"
+                             GroupName="ReportFormat" />
+                <RadioButton Content="{Binding FormatHtmlLabel}"
+                             IsChecked="{Binding IsHtmlSelected, Mode=TwoWay}"
+                             Margin="0,0,0,6"
+                             GroupName="ReportFormat" />
+                <RadioButton Content="{Binding FormatJsonLabel}"
+                             IsChecked="{Binding IsJsonSelected, Mode=TwoWay}"
+                             GroupName="ReportFormat" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="4" Style="{StaticResource CardStyle}" Padding="14,12">
+            <StackPanel>
+                <TextBlock Text="{Binding SectionsLabel}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,10"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <CheckBox Content="{Binding IncludeCategoriesLabel}"
+                          IsChecked="{Binding IncludeCategories, Mode=TwoWay}"
+                          Margin="0,0,0,6" />
+                <CheckBox Content="{Binding IncludeExtensionsLabel}"
+                          IsChecked="{Binding IncludeExtensions, Mode=TwoWay}"
+                          Margin="0,0,0,6" />
+                <CheckBox Content="{Binding IncludeErrorsLabel}"
+                          IsChecked="{Binding IncludeErrors, Mode=TwoWay}"
+                          Margin="0,0,0,6" />
+                <CheckBox Content="{Binding IncludeTreeLabel}"
+                          IsChecked="{Binding IncludeDirectoryTree, Mode=TwoWay}" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="6" Style="{StaticResource CardStyle}" Padding="14,12">
+            <StackPanel>
+                <TextBlock Text="{Binding LimitsLabel}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,10"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="100" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0"
+                               Text="{Binding MaxFilesLabel}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBox Grid.Row="0" Grid.Column="2"
+                             Text="{Binding MaxLargestFiles, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center"
+                             Height="30" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0"
+                               Text="{Binding MaxFoldersLabel}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBox Grid.Row="2" Grid.Column="2"
+                             Text="{Binding MaxLargestFolders, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center"
+                             Height="30" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="8"
+                   Text="{Binding ValidationMessage}"
+                   Foreground="{DynamicResource DangerBrush}"
+                   TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ValidationMessage}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <StackPanel Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{Binding CancelButtonText}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding CancelCommand}"
+                    MinWidth="100"
+                    Margin="0,0,8,0"
+                    IsCancel="True" />
+            <Button Content="{Binding ExportButtonText}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding ConfirmCommand}"
+                    MinWidth="120"
+                    IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>

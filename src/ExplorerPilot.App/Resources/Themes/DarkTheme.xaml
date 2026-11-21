@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="BgMainBrush" Color="#FF111318" />
+    <SolidColorBrush x:Key="BgPanelBrush" Color="#FF1C2028" />
+    <SolidColorBrush x:Key="BgControlBrush" Color="#FF272D37" />
+    <SolidColorBrush x:Key="BgControlHoverBrush" Color="#FF323A46" />
+    <SolidColorBrush x:Key="BgSelectedBrush" Color="#FF1E3A5F" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#FF3B82F6" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#FF60A5FA" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#FF2563EB" />
+    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="AccentSubtleBrush" Color="#333B82F6" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF1F5F9" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFAAB4C3" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#FFAAB4C3" />
+    <SolidColorBrush x:Key="BorderBrushKey" Color="#FF374151" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="#FF374151" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#FFEF4444" />
+    <SolidColorBrush x:Key="DangerHoverBrush" Color="#FFF87171" />
+    <SolidColorBrush x:Key="DangerBorderBrush" Color="#66EF4444" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#FF93C5FD" />
+    <SolidColorBrush x:Key="TrackBrush" Color="#FF1A1F27" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#FF22C55E" />
+    <SolidColorBrush x:Key="GlyphFileBrush" Color="#FF94A3B8" />
+
+    <!-- Compatibility aliases -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FF111318" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FF1C2028" />
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="#FF272D37" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#FF323A46" />
+
+    <!-- Treemap category fills (restrained; readable on dark chrome) -->
+    <SolidColorBrush x:Key="TreemapVideosBrush" Color="#FF3B82F6" />
+    <SolidColorBrush x:Key="TreemapImagesBrush" Color="#FF22C55E" />
+    <SolidColorBrush x:Key="TreemapAudioBrush" Color="#FFA78BFA" />
+    <SolidColorBrush x:Key="TreemapDocumentsBrush" Color="#FFFBBF24" />
+    <SolidColorBrush x:Key="TreemapArchivesBrush" Color="#FFFB923C" />
+    <SolidColorBrush x:Key="TreemapApplicationsBrush" Color="#FF2DD4BF" />
+    <SolidColorBrush x:Key="TreemapOtherBrush" Color="#FF64748B" />
+    <SolidColorBrush x:Key="TreemapFolderBrush" Color="#FF475569" />
+
+</ResourceDictionary>

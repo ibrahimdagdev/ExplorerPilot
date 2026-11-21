@@ -1,0 +1,14 @@
+Copyright (c) 2026 Tasarisoft / İbrahim Dağ
+
+All rights reserved.
+
+Permission to use ExplorerPilot is granted for personal and internal evaluation
+and production use on machines you own or administer, subject to the following:
+
+1. You may redistribute unmodified portable binaries that you built or obtained
+   from the publisher, together with this LICENSE file and checksums.
+2. You may not sell, rebrand, or claim authorship of ExplorerPilot without
+   prior written permission from Tasarisoft.
+3. The software is provided "AS IS", without warranty of any kind.
+
+No telemetry is sent by default. Local logs and settings remain on your device.
