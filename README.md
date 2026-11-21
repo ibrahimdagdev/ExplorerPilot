@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Application** | ExplorerPilot |
-| **Version** | 2.0.0-alpha.2 (development) / 1.1.0 (latest release) |
+| **Version** | 2.0.0-alpha.3 (development) / 1.1.0 (latest release) |
 | **Developer** | İbrahim Dağ |
 | **Publisher** | Tasarisoft |
 | **Website** | [tasarisoft.com](https://tasarisoft.com) |
@@ -14,9 +14,10 @@
 
 Inspired by the *purpose* of tools such as TreeSize, WizTree, and WinDirStat — but implemented independently, without copying code, assets, branding, or UI designs.
 
-## Features (v1.1.0)
+## Features (v1.1.0 / v2.0 alpha)
 
 - Scan a complete drive or a selected folder (background worker, cancellable)
+- Multi-drive overview, Dashboard KPIs, and **Scheduled Scans** (in-app Daily/Weekly/Monthly/Manual plans with auto-snapshot on success)
 - Nine-module workspace: Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Cleanup, Trends
 - Snapshot save/import/export, comparison, cleanup recommendations (report-only), trends
 - CSV / HTML reporting with formula-injection and HTML escaping protections

@@ -2748,6 +2748,111 @@
                             </TabControl>
                         </Grid>
                     </TabItem>
+
+                    <TabItem Header="{DynamicResource Scheduled_Title}">
+                        <Grid Margin="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Content="{DynamicResource Scheduled_New}" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ScheduledScans.NewPlanCommand}" Margin="0,0,8,0" />
+                                    <Button Content="{DynamicResource Scheduled_Save}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ScheduledScans.SavePlanCommand}" Margin="0,0,8,0" />
+                                    <Button Content="{DynamicResource Scheduled_Delete}" Style="{StaticResource DangerButtonStyle}" Command="{Binding ScheduledScans.DeletePlanCommand}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource Scheduled_Title}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                    <TextBlock Text="{DynamicResource Scheduled_Subtitle}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                    <TextBlock Text="{Binding ScheduledScans.StatusText}" Style="{StaticResource MutedTextStyle}" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <Border Grid.Row="1" Margin="0,0,0,10" Padding="10,8" CornerRadius="8"
+                                    Background="{DynamicResource BgControlBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushKey}" BorderThickness="1"
+                                    Visibility="{Binding ScheduledScans.HasMissedPlans, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding ScheduledScans.MissedBanner}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                            </Border>
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.1*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <ListBox Grid.Column="0" ItemsSource="{Binding ScheduledScans.Plans}"
+                                         SelectedItem="{Binding ScheduledScans.SelectedPlan, Mode=TwoWay}"
+                                         Margin="0,0,10,0"
+                                         VirtualizingPanel.IsVirtualizing="True">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="4">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding TargetPath}" />
+                                                <TextBlock Style="{StaticResource MutedTextStyle}">
+                                                    <Run Text="{Binding FrequencyText, Mode=OneWay}" />
+                                                    <Run Text=" · " />
+                                                    <Run Text="{Binding EnabledText, Mode=OneWay}" />
+                                                </TextBlock>
+                                                <TextBlock Style="{StaticResource MutedTextStyle}">
+                                                    <Run Text="{DynamicResource Scheduled_NextRun}" />
+                                                    <Run Text=": " />
+                                                    <Run Text="{Binding NextRunText, Mode=OneWay}" />
+                                                </TextBlock>
+                                                <TextBlock Style="{StaticResource MutedTextStyle}">
+                                                    <Run Text="{DynamicResource Scheduled_LastRun}" />
+                                                    <Run Text=": " />
+                                                    <Run Text="{Binding LastRunText, Mode=OneWay}" />
+                                                    <Run Text=" · " />
+                                                    <Run Text="{Binding OutcomeText, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Border Grid.Column="1" Style="{StaticResource SummaryCardStyle}" Padding="12">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Scheduled_Name}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBox Text="{Binding ScheduledScans.EditorName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                                            <TextBlock Text="{DynamicResource Scheduled_Target}" Style="{StaticResource MetricLabelStyle}" />
+                                            <DockPanel Margin="0,0,0,8">
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource Scheduled_Browse}" Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding ScheduledScans.BrowseTargetCommand}" Margin="8,0,0,0" />
+                                                <TextBox Text="{Binding ScheduledScans.EditorTargetPath, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DockPanel>
+                                            <TextBlock Text="{DynamicResource Scheduled_Frequency}" Style="{StaticResource MetricLabelStyle}" />
+                                            <ComboBox ItemsSource="{Binding ScheduledScans.FrequencyOptions}"
+                                                      SelectedItem="{Binding ScheduledScans.SelectedFrequency, Mode=TwoWay}"
+                                                      DisplayMemberPath="DisplayName" Margin="0,0,0,8" />
+                                            <TextBlock Text="{DynamicResource Scheduled_Time}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBox Text="{Binding ScheduledScans.TimeText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                                            <TextBlock Text="{DynamicResource Scheduled_Weekday}" Style="{StaticResource MetricLabelStyle}" />
+                                            <ComboBox ItemsSource="{Binding ScheduledScans.WeekdayOptions}"
+                                                      SelectedItem="{Binding ScheduledScans.SelectedWeekday, Mode=TwoWay}"
+                                                      DisplayMemberPath="DisplayName" Margin="0,0,0,8" />
+                                            <TextBlock Text="{DynamicResource Scheduled_MonthDay}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBox Text="{Binding ScheduledScans.MonthlyDay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                                            <CheckBox Content="{DynamicResource Scheduled_EnabledFlag}"
+                                                      IsChecked="{Binding ScheduledScans.EditorEnabled, Mode=TwoWay}" Margin="0,0,0,12" />
+                                            <WrapPanel>
+                                                <Button Content="{DynamicResource Scheduled_Toggle}" Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding ScheduledScans.ToggleEnabledCommand}" Margin="0,0,8,8" />
+                                                <Button Content="{DynamicResource Scheduled_RunNow}" Style="{StaticResource PrimaryButtonStyle}"
+                                                        Command="{Binding ScheduledScans.RunNowCommand}" Margin="0,0,8,8" />
+                                                <Button Content="{DynamicResource Scheduled_Cancel}" Style="{StaticResource DangerButtonStyle}"
+                                                        Command="{Binding ScheduledScans.CancelRunCommand}" Margin="0,0,8,8" />
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
                 </TabControl>
             </Border>
 

@@ -125,6 +125,17 @@ public partial class App : Application
         {
             logger.LogError(ex, "Background drive discovery failed after MainWindow was shown");
         }
+
+        try
+        {
+            await _services.GetRequiredService<Core.Interfaces.IScheduledScanService>()
+                .StartAsync()
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Scheduled scan service failed to start");
+        }
     }
 
     private void LogStartupFailure(Exception ex)
@@ -277,6 +288,7 @@ public partial class App : Application
         services.AddSingleton<CleanupTabViewModel>();
         services.AddSingleton<TrendsTabViewModel>();
         services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<ScheduledScansViewModel>();
         services.AddTransient<AboutViewModel>();
         services.AddTransient<AboutWindow>();
         services.AddTransient<SystemInformationViewModel>();
@@ -291,6 +303,18 @@ public partial class App : Application
     {
         if (_services is not null)
         {
+            try
+            {
+                _services.GetService<Core.Interfaces.IScheduledScanService>()
+                    ?.StopAsync()
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch
+            {
+                // ignore scheduler shutdown failures
+            }
+
             try
             {
                 _services.GetService<MainViewModel>()?.Dispose();

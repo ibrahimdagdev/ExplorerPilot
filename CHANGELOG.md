@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-alpha.3 — 2026-11-22
+
+### Added
+- Scheduled Scans tab: create/edit/delete/enable plans with Daily, Weekly, Monthly, or Manual frequency
+- In-process scheduler (runs only while ExplorerPilot is open; no Windows Service / Task Scheduler)
+- Missed-while-closed informational banner (does not auto-start overdue plans)
+- Shared concurrency guard with manual scans (`SkippedBusy` when another scan is active)
+- Automatic snapshot on successful completed scheduled scans (schema 1.0); incomplete/failed/cancelled are not snapshotted
+- `IScheduledScanService` / `IScheduledScanStore` with atomic JSON persistence under `%LocalAppData%\ExplorerPilot\schedules`
+
+### Notes
+- Development build on `feature/v2.0-scheduled-scans`; no GitHub Release for this alpha
+- Timer does not run when the application is closed
+
 ## 2.0.0-alpha.2 — 2026-11-22
 
 ### Added

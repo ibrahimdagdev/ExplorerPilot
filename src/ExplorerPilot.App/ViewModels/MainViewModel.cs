@@ -15,16 +15,19 @@ using ExplorerPilot.Core.Interfaces;
 using ExplorerPilot.Core.Models;
 using ExplorerPilot.Core.Reporting;
 using ExplorerPilot.Core.Scanning;
+using ExplorerPilot.Core.Scheduling;
 using ExplorerPilot.Core.Treemap;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
 namespace ExplorerPilot.App.ViewModels;
 
-public partial class MainViewModel : ObservableObject, IDisposable
+public partial class MainViewModel : ObservableObject, IDisposable, IScheduledScanExecutor
 {
     private readonly IDiskScanner _diskScanner;
     private readonly IDriveDiscoveryService _driveDiscovery;
+    private readonly IScheduledScanService _scheduledScans;
+    private readonly ISnapshotStore _snapshotStore;
     private readonly IThemeService _themeService;
     private readonly ILocalizationService _localization;
     private readonly IAboutDialogService _aboutDialog;
@@ -71,10 +74,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
         CleanupTabViewModel cleanup,
         TrendsTabViewModel trends,
         DashboardViewModel dashboard,
+        ScheduledScansViewModel scheduledScansUi,
+        IScheduledScanService scheduledScans,
+        ISnapshotStore snapshotStore,
         ILogger<MainViewModel> logger)
     {
         _diskScanner = diskScanner;
         _driveDiscovery = driveDiscovery;
+        _scheduledScans = scheduledScans;
+        _snapshotStore = snapshotStore;
         _themeService = themeService;
         _localization = localization;
         _aboutDialog = aboutDialog;
@@ -89,7 +97,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Cleanup = cleanup;
         Trends = trends;
         Dashboard = dashboard;
+        ScheduledScans = scheduledScansUi;
         _logger = logger;
+        _scheduledScans.Executor = this;
 
         ThemeOptions = themeService.AvailableThemes;
         LanguageOptions = localization.AvailableLanguages;
@@ -166,6 +176,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public TrendsTabViewModel Trends { get; }
 
     public DashboardViewModel Dashboard { get; }
+
+    public ScheduledScansViewModel ScheduledScans { get; }
 
     public ObservableCollection<LargestFileRowViewModel> LargestFiles { get; } = [];
 
@@ -568,6 +580,162 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool CanScanDrive(DriveCardViewModel? card) =>
         !IsScanning && !IsDiscoveringDrives && card is { CanScan: true };
 
+    /// <summary>
+    /// Shared exclusive scan entry used by the in-process scheduler (and concurrency-aligned with manual scans).
+    /// </summary>
+    public async Task<ScheduledScanRunResult> ExecuteAsync(
+        ScheduledScanDefinition plan,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+
+        if (!Application.Current.Dispatcher.CheckAccess())
+        {
+            return await Application.Current.Dispatcher.InvokeAsync(
+                    () => ExecuteAsync(plan, cancellationToken))
+                .Task.Unwrap()
+                .ConfigureAwait(true);
+        }
+
+        if (IsScanning)
+        {
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.SkippedBusy,
+                ErrorMessage = "Another scan is already running."
+            };
+        }
+
+        if (!ScheduledScanPathValidator.TryNormalize(plan.TargetPath, out var path, out var pathError))
+        {
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.Failed,
+                ErrorMessage = pathError
+            };
+        }
+
+        SelectedFolder = path;
+        SelectedDrive = AvailableDrives.FirstOrDefault(d =>
+            string.Equals(d.RootPath, path, StringComparison.OrdinalIgnoreCase));
+
+        _exportCts?.Cancel();
+        _scanCts?.Dispose();
+        _scanCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        IsScanning = true;
+        LastResult = null;
+        _lastResultForLocalization = null;
+        RootNode = null;
+        TreeRoots.Clear();
+        _treeByNode.Clear();
+        SelectedExplorerNode = null;
+        HasScanResults = false;
+        _scanSessionId = Guid.Empty;
+        Search.OnScanStarting();
+        Duplicates.OnScanStarting();
+        Treemap.OnScanStarting();
+        Comparison.OnScanStarting();
+        Cleanup.OnScanStarting();
+        Trends.OnScanStarting();
+        Dashboard.OnScanStarting();
+        _lastScanCompletedAtUtc = null;
+        ClearLargestFiles();
+        ClearFileTypeStatistics();
+        ClearSummary();
+        ApplyStatus(UiStatusKind.Scanning);
+        ApplyCompleteness(CompletenessKind.InProgress);
+
+        var progress = new Progress<ScanProgress>(OnScanProgress);
+        try
+        {
+            _logger.LogInformation(
+                "Starting scheduled scan {PlanId} of {Path}",
+                plan.Id,
+                PathRedaction.ForLog(path));
+
+            var result = await _diskScanner.ScanAsync(path, progress, _scanCts.Token).ConfigureAwait(true);
+            LastResult = result;
+            _lastResultForLocalization = result;
+            ApplyResult(result);
+
+            if (result.WasCancelled)
+            {
+                return new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Cancelled
+                };
+            }
+
+            if (result.FinalStatus == ScanPhase.Failed || !result.IsComplete)
+            {
+                return new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = result.FinalStatus == ScanPhase.Failed
+                        ? ScheduledScanRunOutcome.Failed
+                        : ScheduledScanRunOutcome.Incomplete,
+                    ErrorMessage = result.Errors.FirstOrDefault()?.Message
+                };
+            }
+
+            try
+            {
+                var snapshotName = string.IsNullOrWhiteSpace(plan.Name)
+                    ? $"Scheduled {DateTime.Now:yyyy-MM-dd HH:mm}"
+                    : $"{plan.Name} ({DateTime.Now:yyyy-MM-dd HH:mm})";
+                var info = await _snapshotStore.SaveAsync(result, snapshotName, cancellationToken: CancellationToken.None)
+                    .ConfigureAwait(true);
+                return new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Succeeded,
+                    SnapshotId = info.Id
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Automatic snapshot failed for scheduled plan {PlanId}", plan.Id);
+                return new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.SnapshotFailed,
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            ApplyStatus(UiStatusKind.ScanCancelled);
+            ApplyCompleteness(CompletenessKind.Cancelled);
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.Cancelled
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Scheduled scan failed for {Path}", PathRedaction.ForLog(path));
+            ApplyStatus(UiStatusKind.ScanFailed, _localization.GetString("Error_Generic"));
+            ApplyCompleteness(CompletenessKind.Failed);
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.Failed,
+                ErrorMessage = ex.Message
+            };
+        }
+        finally
+        {
+            IsScanning = false;
+            _scanCts?.Dispose();
+            _scanCts = null;
+        }
+    }
+
     private static DriveInfoModel ToDriveInfoModel(DriveInformation drive) =>
         new()
         {
@@ -960,6 +1128,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void CancelScan()
     {
+        _ = _scheduledScans.CancelActiveAsync();
         _scanCts?.Cancel();
         ApplyStatus(UiStatusKind.Cancelling);
     }
@@ -1321,6 +1490,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Cleanup.RefreshLocalization();
         Trends.RefreshLocalization();
         Dashboard.RefreshLocalization();
+        ScheduledScans.RefreshLocalization();
     }
 
     private void RefreshLocalizedChrome()
@@ -1620,6 +1790,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Dashboard.NavigateToTabRequested -= OnDashboardNavigateToTab;
         Dashboard.RevealPathRequested -= OnDashboardRevealPath;
         Dashboard.ScanRootRequested -= OnDashboardScanRoot;
+        _scheduledScans.Executor = null;
         Trends.Dispose();
         Comparison.Dispose();
 
