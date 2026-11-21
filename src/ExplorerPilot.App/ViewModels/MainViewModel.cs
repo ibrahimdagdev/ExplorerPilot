@@ -47,6 +47,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private IReadOnlyList<LargestFileInfo> _largestFilesSource = [];
     private IReadOnlyList<FileExtensionRowViewModel> _extensionRowsSource = [];
     private Guid _scanSessionId = Guid.Empty;
+    private DateTimeOffset? _lastScanCompletedAtUtc;
+    private IReadOnlyList<DriveInformation> _discoveredDrives = [];
     private readonly Dictionary<FileSystemNode, TreeNodeViewModel> _treeByNode = new(NodeReferenceComparer.Instance);
     private bool _suppressExplorerToTreemap;
     private bool _suppressTreemapToExplorer;
@@ -68,6 +70,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ComparisonTabViewModel comparison,
         CleanupTabViewModel cleanup,
         TrendsTabViewModel trends,
+        DashboardViewModel dashboard,
         ILogger<MainViewModel> logger)
     {
         _diskScanner = diskScanner;
@@ -85,6 +88,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Comparison = comparison;
         Cleanup = cleanup;
         Trends = trends;
+        Dashboard = dashboard;
         _logger = logger;
 
         ThemeOptions = themeService.AvailableThemes;
@@ -106,9 +110,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         _localization.LanguageChanged += OnLanguageChanged;
         Treemap.NodeSelected += OnTreemapNodeSelected;
+        Dashboard.NavigateToTabRequested += OnDashboardNavigateToTab;
+        Dashboard.RevealPathRequested += OnDashboardRevealPath;
+        Dashboard.ScanRootRequested += OnDashboardScanRoot;
         RefreshLocalizedChrome();
         ApplyStatus(_statusKind);
+        Dashboard.SetVisible(SelectedMainTabIndex == 0);
     }
+
+    partial void OnSelectedMainTabIndexChanged(int value) =>
+        Dashboard.SetVisible(value == 0);
 
     /// <summary>Currently selected Directory Explorer node (shared with Treemap).</summary>
     public TreeNodeViewModel? SelectedExplorerNode
@@ -153,6 +164,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public CleanupTabViewModel Cleanup { get; }
 
     public TrendsTabViewModel Trends { get; }
+
+    public DashboardViewModel Dashboard { get; }
 
     public ObservableCollection<LargestFileRowViewModel> LargestFiles { get; } = [];
 
@@ -427,6 +440,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             AvailableDrives.Clear();
             DriveCards.Clear();
+            _discoveredDrives = discovered;
             foreach (var drive in discovered)
             {
                 AvailableDrives.Add(ToDriveInfoModel(drive));
@@ -438,6 +452,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             SelectedDrive = AvailableDrives.FirstOrDefault(d => d.IsReady)
                             ?? AvailableDrives.FirstOrDefault();
             HasDriveCards = DriveCards.Count > 0;
+            SyncDashboardInputs();
 
             if (AvailableDrives.Count == 0)
             {
@@ -465,8 +480,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _logger.LogError(ex, "Drive discovery failed");
             AvailableDrives.Clear();
             DriveCards.Clear();
+            _discoveredDrives = [];
             HasDriveCards = false;
             SelectedDrive = null;
+            SyncDashboardInputs();
             DriveSelectorStatus = _localization.GetString("Drive_DiscoveryFailed");
             status?.Report(_localization.GetString("Drive_DiscoveryFailedShort"));
             ApplyStatus(UiStatusKind.DriveDiscoveryFailed);
@@ -509,7 +526,42 @@ public partial class MainViewModel : ObservableObject, IDisposable
                             string.Equals(d.Name, card.Name, StringComparison.OrdinalIgnoreCase));
 
         // Switch to Explorer so results are visible after ApplyResult.
-        SelectedMainTabIndex = 1;
+        SelectedMainTabIndex = DashboardTabIndex.Explorer;
+        await ScanAsync().ConfigureAwait(true);
+    }
+
+    private void SyncDashboardInputs()
+    {
+        var incomplete = LastResult is null
+            ? false
+            : LastResult.WasCancelled || LastResult.FinalStatus == ScanPhase.Failed;
+        Dashboard.BindInputs(
+            _discoveredDrives,
+            LastResult,
+            _scanSessionId,
+            incomplete,
+            _lastScanCompletedAtUtc);
+    }
+
+    private void OnDashboardNavigateToTab(object? sender, int tabIndex) =>
+        SelectedMainTabIndex = tabIndex;
+
+    private void OnDashboardRevealPath(object? sender, string path) =>
+        _fileActions.TryOpenContainingFolder(path, out _);
+
+    private async void OnDashboardScanRoot(object? sender, string rootPath)
+    {
+        if (string.IsNullOrWhiteSpace(rootPath) || IsScanning)
+        {
+            return;
+        }
+
+        SelectedFolder = rootPath;
+        SelectedDrive = AvailableDrives.FirstOrDefault(d =>
+                            string.Equals(d.RootPath, rootPath, StringComparison.OrdinalIgnoreCase))
+                        ?? AvailableDrives.FirstOrDefault(d =>
+                            string.Equals(d.Name, rootPath, StringComparison.OrdinalIgnoreCase));
+        SelectedMainTabIndex = DashboardTabIndex.Explorer;
         await ScanAsync().ConfigureAwait(true);
     }
 
@@ -853,6 +905,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Comparison.OnScanStarting();
         Cleanup.OnScanStarting();
         Trends.OnScanStarting();
+        Dashboard.OnScanStarting();
+        _lastScanCompletedAtUtc = null;
         ClearLargestFiles();
         ClearFileTypeStatistics();
         ClearSummary();
@@ -961,6 +1015,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         RebuildLargestFilesView();
         ApplyFileTypeStatistics(result);
         RefreshSummaryNumbers(result);
+
+        _lastScanCompletedAtUtc = DateTimeOffset.UtcNow;
+        SyncDashboardInputs();
 
         if (result.WasCancelled)
         {
@@ -1263,6 +1320,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Comparison.RefreshLocalization();
         Cleanup.RefreshLocalization();
         Trends.RefreshLocalization();
+        Dashboard.RefreshLocalization();
     }
 
     private void RefreshLocalizedChrome()
@@ -1559,6 +1617,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _localization.LanguageChanged -= OnLanguageChanged;
         Treemap.NodeSelected -= OnTreemapNodeSelected;
+        Dashboard.NavigateToTabRequested -= OnDashboardNavigateToTab;
+        Dashboard.RevealPathRequested -= OnDashboardRevealPath;
+        Dashboard.ScanRootRequested -= OnDashboardScanRoot;
         Trends.Dispose();
         Comparison.Dispose();
 

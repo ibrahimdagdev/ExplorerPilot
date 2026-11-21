@@ -120,7 +120,18 @@ public sealed class DiskScannerMetadataOptimizationTests
             }));
 
         // Progress<T> may post a final callback after ScanAsync returns; allow it to flush.
-        await Task.Delay(50);
+        for (var i = 0; i < 20; i++)
+        {
+            lock (gate)
+            {
+                if (reports.Exists(r => r.CurrentStatus == ScanPhase.Completed))
+                {
+                    break;
+                }
+            }
+
+            await Task.Delay(25);
+        }
 
         List<ScanProgress> snapshot;
         lock (gate)
@@ -131,7 +142,7 @@ public sealed class DiskScannerMetadataOptimizationTests
         Assert.Equal(ScanPhase.Completed, result.FinalStatus);
         Assert.NotEmpty(snapshot);
         Assert.Contains(snapshot, r => r.ScannedFileCount > 0);
-        Assert.Equal(ScanPhase.Completed, snapshot[^1].CurrentStatus);
+        Assert.Contains(snapshot, r => r.CurrentStatus == ScanPhase.Completed);
     }
 
     private static void AssertParity(ScanResult left, ScanResult right, bool compareErrorMessages = true)

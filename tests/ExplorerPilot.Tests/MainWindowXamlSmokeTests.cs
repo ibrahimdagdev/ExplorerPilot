@@ -51,8 +51,8 @@ public sealed class MainWindowXamlSmokeTests
                 // Force tab content materialization where DataGrid headers live.
                 if (FindTabControl(window) is { } tabs)
                 {
-                    Assert.True(tabs.Items.Count >= 9,
-                        "Expected all nine workspace tabs (Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Cleanup, Trends).");
+                    Assert.True(tabs.Items.Count >= 11,
+                        "Expected Dashboard, Drives, and nine analysis tabs.");
 
                     for (var i = 0; i < tabs.Items.Count; i++)
                     {
@@ -171,6 +171,7 @@ public sealed class MainWindowXamlSmokeTests
         services.AddSingleton<ComparisonTabViewModel>();
         services.AddSingleton<CleanupTabViewModel>();
         services.AddSingleton<TrendsTabViewModel>();
+        services.AddSingleton<DashboardViewModel>();
         services.AddTransient<AboutViewModel>();
         services.AddTransient<AboutWindow>();
         services.AddTransient<SystemInformationViewModel>();

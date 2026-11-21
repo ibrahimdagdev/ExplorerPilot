@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0-alpha.2 — 2026-11-22
+
+### Added
+- Professional Dashboard tab: KPI cards, volume capacity, last-scan summary, top files/folders, category bars
+- Snapshot/trend and Cleanup preview panels with navigation to existing modules
+- `IDashboardSummaryService` / `DashboardSummaryService` (background aggregation, bounded top-N, session guards)
+
+### Notes
+- Development build on `feature/v2.0-dashboard`; no GitHub Release for this alpha
+
 ## 2.0.0-alpha.1 — 2026-11-22
 
 ### Added

@@ -12,10 +12,10 @@
     <ApplicationIcon>Assets\ExplorerPilot.ico</ApplicationIcon>
 
     <!-- Application identity & version (single source of truth; no duplicate AssemblyInfo attributes) -->
-    <Version>2.0.0-alpha.1</Version>
+    <Version>2.0.0-alpha.2</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.1</FileVersion>
-    <InformationalVersion>2.0.0-alpha.1</InformationalVersion>
+    <FileVersion>2.0.0.2</FileVersion>
+    <InformationalVersion>2.0.0-alpha.2</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>ExplorerPilot</Product>
     <Company>Tasarisoft</Company>

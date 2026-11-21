@@ -239,6 +239,291 @@
             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0">
                 <TabControl Style="{StaticResource WorkspaceTabControlStyle}"
                             SelectedIndex="{Binding SelectedMainTabIndex, Mode=TwoWay}">
+                    <!-- Professional dashboard (v2.0 Phase 2) -->
+                    <TabItem Header="{DynamicResource Dashboard_Title}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <DockPanel Grid.Row="0" Margin="4,0,4,12">
+                                    <Button DockPanel.Dock="Right"
+                                            Content="{DynamicResource Dashboard_Refresh}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding Dashboard.RefreshCommand}"
+                                            Margin="12,0,0,0" />
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource Dashboard_Title}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                        <TextBlock Text="{DynamicResource Dashboard_Subtitle}" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Dashboard.StatusText}" Style="{StaticResource MutedTextStyle}" Margin="0,6,0,0" />
+                                    </StackPanel>
+                                </DockPanel>
+
+                                <!-- KPI row -->
+                                <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,12">
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Dashboard_Kpi_Drives}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBlock Text="{Binding Dashboard.DriveCountText}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Dashboard_Kpi_Capacity}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBlock Text="{Binding Dashboard.TotalCapacityText}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Dashboard_Kpi_Used}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBlock Text="{Binding Dashboard.UsedSpaceText}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <ProgressBar Style="{StaticResource UtilizationBarStyle}" Margin="0,8,0,0" Minimum="0" Maximum="1"
+                                                         Value="{Binding Dashboard.UsageRatio, Mode=OneWay}" />
+                                            <TextBlock Text="{Binding Dashboard.UsageText}" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Dashboard_Kpi_Free}" Style="{StaticResource MetricLabelStyle}" />
+                                            <TextBlock Text="{Binding Dashboard.FreeSpaceText}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{DynamicResource Dashboard_HighestUsage}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                            <TextBlock Text="{Binding Dashboard.HighestUsageDriveText}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+
+                                <TextBlock Grid.Row="2" Text="{DynamicResource Dashboard_CapacityNote}"
+                                           Style="{StaticResource MutedTextStyle}" Margin="8,0,8,12" TextWrapping="Wrap" />
+
+                                <!-- Drives + last scan -->
+                                <Grid Grid.Row="3" Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12" MinHeight="220">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Top" Text="{DynamicResource Dashboard_DrivesSection}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8" />
+                                            <ListBox ItemsSource="{Binding Dashboard.DriveRows}"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                     VirtualizingPanel.IsVirtualizing="True"
+                                                     MaxHeight="280">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                        <Setter Property="Padding" Value="0,4" />
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListBoxItem">
+                                                                    <ContentPresenter />
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Padding="8" Margin="0,0,0,6" CornerRadius="8"
+                                                                Background="{DynamicResource BgControlBrush}">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                                    <TextBlock Text="{Binding TitleText}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding RootPath}" />
+                                                                    <TextBlock Text="{Binding MetaText}" Style="{StaticResource MutedTextStyle}" />
+                                                                    <ProgressBar Style="{StaticResource UtilizationBarStyle}" Margin="0,6,0,4" Minimum="0" Maximum="1"
+                                                                                 Value="{Binding UsageRatio, Mode=OneWay}" />
+                                                                    <TextBlock Style="{StaticResource MutedTextStyle}">
+                                                                        <Run Text="{Binding UsedText, Mode=OneWay}" />
+                                                                        <Run Text=" / " />
+                                                                        <Run Text="{Binding TotalText, Mode=OneWay}" />
+                                                                        <Run Text=" (" />
+                                                                        <Run Text="{Binding UsageText, Mode=OneWay}" />
+                                                                        <Run Text=")" />
+                                                                    </TextBlock>
+                                                                </StackPanel>
+                                                                <Button Grid.Column="1" Content="{DynamicResource Dashboard_ScanDrive}"
+                                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                                        Command="{Binding DataContext.Dashboard.ScanDriveCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        IsEnabled="{Binding CanScan}"
+                                                                        VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12" MinHeight="220">
+                                        <StackPanel>
+                                            <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                                                <TextBlock Text="{DynamicResource Dashboard_LastScan}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource Dashboard_OpenExplorer}"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding Dashboard.OpenExplorerCommand}" Margin="8,0,0,0" />
+                                            </DockPanel>
+                                            <TextBlock Text="{DynamicResource Dashboard_NoScan}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                                       Visibility="{Binding Dashboard.HasScanSummary, Converter={StaticResource BoolToVisInvert}}" />
+                                            <StackPanel Visibility="{Binding Dashboard.HasScanSummary, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{DynamicResource Dashboard_ScanRoot}" Style="{StaticResource MetricLabelStyle}" />
+                                                <TextBlock Text="{Binding Dashboard.ScanRootText}" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Dashboard.ScanRootText}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_ScanTime}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.ScanTimeText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_ScanSize}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.ScanSizeText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_ScanCounts}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.ScanCountsText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_ScanDuration}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.ScanDurationText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_IncompleteWarning}" Style="{StaticResource MutedTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap"
+                                                           Visibility="{Binding Dashboard.ShowIncompleteWarning, Converter={StaticResource BoolToVis}}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Analysis lists -->
+                                <Grid Grid.Row="4" Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Top" Text="{DynamicResource Dashboard_LargestFiles}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8" />
+                                            <ListBox ItemsSource="{Binding Dashboard.LargestFiles}" BorderThickness="0" Background="Transparent"
+                                                     VirtualizingPanel.IsVirtualizing="True" MaxHeight="260">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <DockPanel Margin="0,0,0,6" LastChildFill="True">
+                                                            <Button DockPanel.Dock="Right" Content="{DynamicResource Dashboard_OpenInExplorer}"
+                                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                                    Command="{Binding DataContext.Dashboard.RevealPathCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                                                    CommandParameter="{Binding}" Margin="8,0,0,0" />
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FullPath}" />
+                                                                <TextBlock Text="{Binding SizeText}" Style="{StaticResource MutedTextStyle}" />
+                                                            </StackPanel>
+                                                        </DockPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <DockPanel>
+                                            <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,0,0,8">
+                                                <TextBlock Text="{DynamicResource Dashboard_LargestFolders}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource Dashboard_OpenTreemap}"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding Dashboard.OpenTreemapCommand}" Margin="8,0,0,0" />
+                                            </DockPanel>
+                                            <ListBox ItemsSource="{Binding Dashboard.LargestFolders}" BorderThickness="0" Background="Transparent"
+                                                     VirtualizingPanel.IsVirtualizing="True" MaxHeight="260">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,6">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FullPath}" />
+                                                            <TextBlock Text="{Binding SizeText}" Style="{StaticResource MutedTextStyle}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </DockPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="2" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Top" Text="{DynamicResource Dashboard_Categories}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8" />
+                                            <ListBox ItemsSource="{Binding Dashboard.Categories}" BorderThickness="0" Background="Transparent"
+                                                     VirtualizingPanel.IsVirtualizing="True" MaxHeight="260">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,8">
+                                                            <DockPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                <TextBlock DockPanel.Dock="Right" Text="{Binding PercentageText}" Style="{StaticResource MutedTextStyle}" />
+                                                            </DockPanel>
+                                                            <ProgressBar Style="{StaticResource UtilizationBarStyle}" Margin="0,4,0,2" Minimum="0" Maximum="1"
+                                                                         Value="{Binding UsageRatio, Mode=OneWay}" />
+                                                            <TextBlock Style="{StaticResource MutedTextStyle}">
+                                                                <Run Text="{Binding SizeText, Mode=OneWay}" />
+                                                                <Run Text=" · " />
+                                                                <Run Text="{Binding FileCountText, Mode=OneWay}" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </DockPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Snapshot + cleanup -->
+                                <Grid Grid.Row="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                                                <TextBlock Text="{DynamicResource Dashboard_Snapshots}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource Dashboard_OpenTrends}"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding Dashboard.OpenTrendsCommand}" Margin="8,0,0,0" />
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding Dashboard.SnapshotEmptyText}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap"
+                                                       Visibility="{Binding Dashboard.HasSnapshotSummary, Converter={StaticResource BoolToVisInvert}}" />
+                                            <StackPanel Visibility="{Binding Dashboard.HasSnapshotSummary, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{DynamicResource Dashboard_SnapshotLast}" Style="{StaticResource MetricLabelStyle}" />
+                                                <TextBlock Text="{Binding Dashboard.SnapshotLastText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_SnapshotDelta}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.SnapshotDeltaText}" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="1" Style="{StaticResource SummaryCardStyle}" Margin="4" Padding="12">
+                                        <StackPanel>
+                                            <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                                                <TextBlock Text="{DynamicResource Dashboard_Cleanup}" Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource Dashboard_OpenCleanup}"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        Command="{Binding Dashboard.OpenCleanupCommand}" Margin="8,0,0,0" />
+                                            </DockPanel>
+                                            <StackPanel Visibility="{Binding Dashboard.HasCleanupSummary, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{DynamicResource Dashboard_CleanupSavings}" Style="{StaticResource MetricLabelStyle}" />
+                                                <TextBlock Text="{Binding Dashboard.CleanupSavingsText}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_CleanupCount}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.CleanupCountText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{DynamicResource Dashboard_CleanupRisk}" Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding Dashboard.CleanupRiskText}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Dashboard.CleanupPreviewNote}" Style="{StaticResource MutedTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+
                     <!-- Multi-drive overview (v2.0 Phase 1) — existing module tabs keep relative order -->
                     <TabItem Header="{DynamicResource Drives_Title}">
                         <Grid>

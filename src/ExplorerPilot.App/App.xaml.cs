@@ -276,6 +276,7 @@ public partial class App : Application
         services.AddSingleton<ComparisonTabViewModel>();
         services.AddSingleton<CleanupTabViewModel>();
         services.AddSingleton<TrendsTabViewModel>();
+        services.AddSingleton<DashboardViewModel>();
         services.AddTransient<AboutViewModel>();
         services.AddTransient<AboutWindow>();
         services.AddTransient<SystemInformationViewModel>();

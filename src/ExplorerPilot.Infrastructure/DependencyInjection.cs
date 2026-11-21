@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddSingleton<IDiskScanner, DiskScanner>();
         services.AddSingleton<IDriveDiscoveryService, DriveDiscoveryService>();
         services.AddSingleton<IDriveInfoProvider, DriveInfoProvider>();
+        services.AddSingleton<IDashboardSummaryService, DashboardSummaryService>();
         services.AddSingleton<ISystemInformationProvider, WindowsSystemInformationProvider>();
         services.AddSingleton<IFileSearchService, FileSearchService>();
         services.AddSingleton<IDuplicateFileFinderService, DuplicateFileFinderService>();
