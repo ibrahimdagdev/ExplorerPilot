@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-alpha.1 — 2026-11-22
+
+### Added
+- Multi-drive foundation: `IDriveDiscoveryService` / `DriveInformation` with Fixed, Removable, Network, Optical, and other volume kinds
+- Drives overview tab with capacity bars, Ready/Not Ready status, Refresh, and Scan Drive (single active scan)
+- Volume vs file-scan capacity disclaimer (EN/TR)
+- Overflow-safe capacity helpers (`DriveCapacityMath`)
+
+### Notes
+- Development version on `feature/v2.0-multi-drive`; v1.1.0 release package unchanged
+- Concurrent multi-drive scanning is intentionally not included in this phase
+
 ## 1.1.0 — 2026-11-21
 
 ### Improved

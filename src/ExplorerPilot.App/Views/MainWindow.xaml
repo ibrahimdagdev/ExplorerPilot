@@ -198,7 +198,7 @@
                     <TextBlock Text="{DynamicResource Summary_UsedSpace}" Style="{StaticResource MetricLabelStyle}" />
                     <TextBlock Text="{Binding DriveUsedText}" Style="{StaticResource MetricValueStyle}" />
                     <ProgressBar Style="{StaticResource UtilizationBarStyle}"
-                                 Value="{Binding DriveUsageRatio}"
+                                 Value="{Binding DriveUsageRatio, Mode=OneWay}"
                                  Margin="0,10,0,0"
                                  ToolTip="{Binding DriveUsagePercentText}" />
                 </StackPanel>
@@ -237,7 +237,172 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0">
-                <TabControl Style="{StaticResource WorkspaceTabControlStyle}">
+                <TabControl Style="{StaticResource WorkspaceTabControlStyle}"
+                            SelectedIndex="{Binding SelectedMainTabIndex, Mode=TwoWay}">
+                    <!-- Multi-drive overview (v2.0 Phase 1) — existing module tabs keep relative order -->
+                    <TabItem Header="{DynamicResource Drives_Title}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0"
+                                    Padding="16,12"
+                                    BorderBrush="{DynamicResource BorderBrushKey}"
+                                    BorderThickness="0,0,0,1">
+                                <DockPanel LastChildFill="True">
+                                    <Button DockPanel.Dock="Right"
+                                            Content="{DynamicResource Drives_Refresh}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding RefreshDrivesCommand}"
+                                            Margin="12,0,0,0"
+                                            VerticalAlignment="Center" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Drives_Title}"
+                                                   Style="{StaticResource SectionTitleStyle}"
+                                                   Margin="0" />
+                                        <TextBlock Text="{DynamicResource Drives_Subtitle}"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Margin="0,4,0,0"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <Border Grid.Row="1"
+                                    Margin="16,12,16,0"
+                                    Padding="12,10"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource BgControlBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushKey}"
+                                    BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource Drives_CapacityNote}"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="{DynamicResource Drives_SingleScanNote}"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Margin="0,6,0,0"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Grid Grid.Row="2" Margin="8,8,8,12">
+                                <TextBlock Text="{DynamicResource Drives_Empty}"
+                                           Style="{StaticResource MutedTextStyle}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           Margin="24"
+                                           Visibility="{Binding HasDriveCards, Converter={StaticResource BoolToVisInvert}}" />
+
+                                <ListBox ItemsSource="{Binding DriveCards}"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         VirtualizingPanel.ScrollUnit="Pixel"
+                                         Visibility="{Binding HasDriveCards, Converter={StaticResource BoolToVis}}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Setter Property="Padding" Value="8,6" />
+                                            <Setter Property="Margin" Value="0" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <ContentPresenter />
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource SummaryCardStyle}"
+                                                    Padding="14,12"
+                                                    Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                                                        <TextBlock Text="{Binding TitleText}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   FontSize="15"
+                                                                   FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   Style="{StaticResource MutedTextStyle}">
+                                                            <Run Text="{Binding KindText, Mode=OneWay}" />
+                                                            <Run Text=" · " />
+                                                            <Run Text="{Binding StatusText, Mode=OneWay}" />
+                                                            <Run Text=" · " />
+                                                            <Run Text="{Binding FileSystemText, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Row="0" Grid.Column="1"
+                                                            Content="{DynamicResource Drives_ScanDrive}"
+                                                            Style="{StaticResource PrimaryButtonStyle}"
+                                                            Command="{Binding DataContext.ScanDriveCommand, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            IsEnabled="{Binding CanScan}"
+                                                            MinWidth="120"
+                                                            VerticalAlignment="Center" />
+
+                                                    <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                                 Style="{StaticResource UtilizationBarStyle}"
+                                                                 Margin="0,12,0,8"
+                                                                 Minimum="0"
+                                                                 Maximum="1"
+                                                                 Value="{Binding UsageRatio, Mode=OneWay}"
+                                                                 IsEnabled="{Binding IsReady}" />
+
+                                                    <UniformGrid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                                                 Columns="4"
+                                                                 Margin="0,0,0,0">
+                                                        <StackPanel Margin="0,0,8,0">
+                                                            <TextBlock Text="{DynamicResource Drives_Total}" Style="{StaticResource MetricLabelStyle}" />
+                                                            <TextBlock Text="{Binding TotalText}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="0,0,8,0">
+                                                            <TextBlock Text="{DynamicResource Drives_Used}" Style="{StaticResource MetricLabelStyle}" />
+                                                            <TextBlock Text="{Binding UsedText}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="0,0,8,0">
+                                                            <TextBlock Text="{DynamicResource Drives_Free}" Style="{StaticResource MetricLabelStyle}" />
+                                                            <TextBlock Text="{Binding FreeText}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="{DynamicResource Drives_Usage}" Style="{StaticResource MetricLabelStyle}" />
+                                                            <TextBlock Text="{Binding UsageText}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+
                     <!-- Directory Explorer -->
                     <TabItem Header="{DynamicResource Explorer_Title}">
                         <Grid>
@@ -639,7 +804,7 @@
 
                                                         <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
                                                                      Style="{StaticResource UtilizationBarStyle}"
-                                                                     Value="{Binding UsageRatio}"
+                                                                     Value="{Binding UsageRatio, Mode=OneWay}"
                                                                      Maximum="1"
                                                                      Height="6"
                                                                      Margin="0,6,0,0" />

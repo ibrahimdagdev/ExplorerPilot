@@ -29,6 +29,10 @@ public sealed class LocalizationTests
         Assert.Equal("Taramayı Başlat", tr["Button_StartScan"]);
         Assert.Equal("Directory Explorer", en["Explorer_Title"]);
         Assert.Equal("Klasör Gezgini", tr["Explorer_Title"]);
+        Assert.Equal("Drives", en["Drives_Title"]);
+        Assert.Equal("Sürücüler", tr["Drives_Title"]);
+        Assert.Contains("Volume capacity", en["Drives_CapacityNote"]);
+        Assert.Contains("Birim kapasitesi", tr["Drives_CapacityNote"]);
         // Turkish character coverage across common UI strings (ğ, ü, ş, ı, ö, ç, İ)
         var sample = string.Join('|',
             tr["App_Subtitle"],

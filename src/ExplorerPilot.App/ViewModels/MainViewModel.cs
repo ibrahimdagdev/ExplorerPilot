@@ -24,7 +24,7 @@ namespace ExplorerPilot.App.ViewModels;
 public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IDiskScanner _diskScanner;
-    private readonly IDriveInfoProvider _driveInfoProvider;
+    private readonly IDriveDiscoveryService _driveDiscovery;
     private readonly IThemeService _themeService;
     private readonly ILocalizationService _localization;
     private readonly IAboutDialogService _aboutDialog;
@@ -54,7 +54,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public MainViewModel(
         IDiskScanner diskScanner,
-        IDriveInfoProvider driveInfoProvider,
+        IDriveDiscoveryService driveDiscovery,
         IThemeService themeService,
         ILocalizationService localization,
         IAboutDialogService aboutDialog,
@@ -71,7 +71,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ILogger<MainViewModel> logger)
     {
         _diskScanner = diskScanner;
-        _driveInfoProvider = driveInfoProvider;
+        _driveDiscovery = driveDiscovery;
         _themeService = themeService;
         _localization = localization;
         _aboutDialog = aboutDialog;
@@ -271,21 +271,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<DriveInfoModel> AvailableDrives { get; } = [];
 
+    /// <summary>Multi-drive overview cards (v2.0 Phase 1).</summary>
+    public ObservableCollection<DriveCardViewModel> DriveCards { get; } = [];
+
     public ObservableCollection<TreeNodeViewModel> TreeRoots { get; } = [];
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ScanDriveCommand))]
     private DriveInfoModel? _selectedDrive;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ScanDriveCommand))]
     private string? _selectedFolder;
 
     [ObservableProperty]
     private TreeNodeViewModel? _rootNode;
 
+    /// <summary>0 = Drives overview; 1+ = existing analysis tabs.</summary>
+    [ObservableProperty]
+    private int _selectedMainTabIndex;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ScanDriveCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelScanCommand))]
     [NotifyCanExecuteChangedFor(nameof(BrowseFolderCommand))]
     [NotifyCanExecuteChangedFor(nameof(RefreshDrivesCommand))]
@@ -302,11 +312,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ScanDriveCommand))]
     [NotifyCanExecuteChangedFor(nameof(RefreshDrivesCommand))]
     private bool _isDiscoveringDrives;
 
     [ObservableProperty]
     private string _driveSelectorStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasDriveCards;
 
     [ObservableProperty]
     private ScanProgress? _scanProgress;
@@ -404,7 +418,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            var drives = await _driveInfoProvider.GetDrivesAsync(token).ConfigureAwait(true);
+            var discovered = await _driveDiscovery.DiscoverAsync(token).ConfigureAwait(true);
 
             if (version != _driveDiscoveryVersion)
             {
@@ -412,13 +426,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
             }
 
             AvailableDrives.Clear();
-            foreach (var drive in drives)
+            DriveCards.Clear();
+            foreach (var drive in discovered)
             {
-                AvailableDrives.Add(drive);
+                AvailableDrives.Add(ToDriveInfoModel(drive));
+                var card = new DriveCardViewModel(drive);
+                card.RefreshFormatting(_localization);
+                DriveCards.Add(card);
             }
 
             SelectedDrive = AvailableDrives.FirstOrDefault(d => d.IsReady)
                             ?? AvailableDrives.FirstOrDefault();
+            HasDriveCards = DriveCards.Count > 0;
 
             if (AvailableDrives.Count == 0)
             {
@@ -445,6 +464,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             _logger.LogError(ex, "Drive discovery failed");
             AvailableDrives.Clear();
+            DriveCards.Clear();
+            HasDriveCards = false;
             SelectedDrive = null;
             DriveSelectorStatus = _localization.GetString("Drive_DiscoveryFailed");
             status?.Report(_localization.GetString("Drive_DiscoveryFailedShort"));
@@ -456,6 +477,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             {
                 IsDiscoveringDrives = false;
                 ScanCommand.NotifyCanExecuteChanged();
+                ScanDriveCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -467,6 +489,46 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     private bool CanRefreshDrives() => !IsScanning && !IsDiscoveringDrives;
+
+    /// <summary>
+    /// Starts a single-root scan of the selected volume via the existing DiskScanner pipeline.
+    /// Concurrent multi-drive scans are intentionally unsupported in Phase 1.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanScanDrive))]
+    private async Task ScanDriveAsync(DriveCardViewModel? card)
+    {
+        if (card is null || !card.CanScan)
+        {
+            return;
+        }
+
+        SelectedFolder = card.RootPath;
+        SelectedDrive = AvailableDrives.FirstOrDefault(d =>
+                            string.Equals(d.RootPath, card.RootPath, StringComparison.OrdinalIgnoreCase))
+                        ?? AvailableDrives.FirstOrDefault(d =>
+                            string.Equals(d.Name, card.Name, StringComparison.OrdinalIgnoreCase));
+
+        // Switch to Explorer so results are visible after ApplyResult.
+        SelectedMainTabIndex = 1;
+        await ScanAsync().ConfigureAwait(true);
+    }
+
+    private bool CanScanDrive(DriveCardViewModel? card) =>
+        !IsScanning && !IsDiscoveringDrives && card is { CanScan: true };
+
+    private static DriveInfoModel ToDriveInfoModel(DriveInformation drive) =>
+        new()
+        {
+            Name = drive.Name,
+            RootPath = drive.RootPath,
+            VolumeLabel = drive.VolumeLabel,
+            DriveType = drive.Kind.ToString(),
+            DriveFormat = drive.FileSystem,
+            TotalSizeBytes = drive.TotalSizeBytes,
+            TotalFreeSpaceBytes = drive.TotalFreeSpaceBytes,
+            AvailableFreeSpaceBytes = drive.AvailableFreeSpaceBytes,
+            IsReady = drive.IsReady
+        };
 
     [RelayCommand(CanExecute = nameof(CanBrowse))]
     private void BrowseFolder()
@@ -1188,6 +1250,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         RootNode?.NotifyLocalizationChanged();
         RefreshDriveDisplayBindings();
+        foreach (var card in DriveCards)
+        {
+            card.RefreshFormatting(_localization);
+        }
+
         RefreshLargestFilesFormatting();
         RefreshFileTypeFormatting();
         Search.RefreshLocalization();

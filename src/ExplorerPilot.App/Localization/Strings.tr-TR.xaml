@@ -222,6 +222,32 @@
     <sys:String x:Key="Drive_FreeOfFormat">{0} ({1}) — {3} içinde {2} boş</sys:String>
     <sys:String x:Key="Drive_NotReadyFormat">{0} ({1}) — {2}</sys:String>
 
+    <sys:String x:Key="Drives_Title">Sürücüler</sys:String>
+    <sys:String x:Key="Drives_Subtitle">Birim kapasite özeti — taramak için bir sürücü seçin</sys:String>
+    <sys:String x:Key="Drives_Refresh">Sürücüleri Yenile</sys:String>
+    <sys:String x:Key="Drives_ScanDrive">Sürücüyü Tara</sys:String>
+    <sys:String x:Key="Drives_DefaultLabel">Yerel Disk</sys:String>
+    <sys:String x:Key="Drives_FileSystemUnknown">Bilinmiyor</sys:String>
+    <sys:String x:Key="Drives_NotAvailable">—</sys:String>
+    <sys:String x:Key="Drives_Total">Toplam</sys:String>
+    <sys:String x:Key="Drives_Used">Kullanılan</sys:String>
+    <sys:String x:Key="Drives_Free">Boş</sys:String>
+    <sys:String x:Key="Drives_Usage">Kullanım</sys:String>
+    <sys:String x:Key="Drives_FileSystem">Dosya sistemi</sys:String>
+    <sys:String x:Key="Drives_Kind_Fixed">Yerel sabit</sys:String>
+    <sys:String x:Key="Drives_Kind_Removable">Çıkarılabilir</sys:String>
+    <sys:String x:Key="Drives_Kind_Network">Ağ</sys:String>
+    <sys:String x:Key="Drives_Kind_Optical">Optik</sys:String>
+    <sys:String x:Key="Drives_Kind_Ram">RAM diski</sys:String>
+    <sys:String x:Key="Drives_Kind_Unknown">Diğer</sys:String>
+    <sys:String x:Key="Drives_Status_Ready">Hazır</sys:String>
+    <sys:String x:Key="Drives_Status_NotReady">Hazır değil</sys:String>
+    <sys:String x:Key="Drives_Status_Unavailable">Kullanılamıyor</sys:String>
+    <sys:String x:Key="Drives_Status_TimedOut">Zaman aşımı</sys:String>
+    <sys:String x:Key="Drives_CapacityNote">Birim kapasitesi (Toplam − Boş), dosya tarama toplamı ile aynı değildir. Korunan dosyalar, NTFS üst verisi ve erişim hataları fark yaratabilir.</sys:String>
+    <sys:String x:Key="Drives_Empty">Sürücü bulunamadı. Yenile’yi kullanın veya Klasör Seç’e gidin.</sys:String>
+    <sys:String x:Key="Drives_SingleScanNote">Aynı anda yalnızca bir tarama çalışabilir.</sys:String>
+
     <sys:String x:Key="Node_SkippedLink"> (atlanan bağlantı)</sys:String>
     <sys:String x:Key="Node_Inaccessible"> (erişilemiyor)</sys:String>
     <sys:String x:Key="Node_Error"> (hata)</sys:String>

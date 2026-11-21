@@ -12,6 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddExplorerPilotInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IDiskScanner, DiskScanner>();
+        services.AddSingleton<IDriveDiscoveryService, DriveDiscoveryService>();
         services.AddSingleton<IDriveInfoProvider, DriveInfoProvider>();
         services.AddSingleton<ISystemInformationProvider, WindowsSystemInformationProvider>();
         services.AddSingleton<IFileSearchService, FileSearchService>();

@@ -222,6 +222,32 @@
     <sys:String x:Key="Drive_FreeOfFormat">{0} ({1}) — {2} free of {3}</sys:String>
     <sys:String x:Key="Drive_NotReadyFormat">{0} ({1}) — {2}</sys:String>
 
+    <sys:String x:Key="Drives_Title">Drives</sys:String>
+    <sys:String x:Key="Drives_Subtitle">Volume capacity overview — select a drive to scan</sys:String>
+    <sys:String x:Key="Drives_Refresh">Refresh Drives</sys:String>
+    <sys:String x:Key="Drives_ScanDrive">Scan Drive</sys:String>
+    <sys:String x:Key="Drives_DefaultLabel">Local Disk</sys:String>
+    <sys:String x:Key="Drives_FileSystemUnknown">Unknown</sys:String>
+    <sys:String x:Key="Drives_NotAvailable">—</sys:String>
+    <sys:String x:Key="Drives_Total">Total</sys:String>
+    <sys:String x:Key="Drives_Used">Used</sys:String>
+    <sys:String x:Key="Drives_Free">Free</sys:String>
+    <sys:String x:Key="Drives_Usage">Usage</sys:String>
+    <sys:String x:Key="Drives_FileSystem">File system</sys:String>
+    <sys:String x:Key="Drives_Kind_Fixed">Local fixed</sys:String>
+    <sys:String x:Key="Drives_Kind_Removable">Removable</sys:String>
+    <sys:String x:Key="Drives_Kind_Network">Network</sys:String>
+    <sys:String x:Key="Drives_Kind_Optical">Optical</sys:String>
+    <sys:String x:Key="Drives_Kind_Ram">RAM disk</sys:String>
+    <sys:String x:Key="Drives_Kind_Unknown">Other</sys:String>
+    <sys:String x:Key="Drives_Status_Ready">Ready</sys:String>
+    <sys:String x:Key="Drives_Status_NotReady">Not ready</sys:String>
+    <sys:String x:Key="Drives_Status_Unavailable">Unavailable</sys:String>
+    <sys:String x:Key="Drives_Status_TimedOut">Timed out</sys:String>
+    <sys:String x:Key="Drives_CapacityNote">Volume capacity (Total − Free) is not the same as a file scan total. Protected files, NTFS metadata, and access errors can cause differences.</sys:String>
+    <sys:String x:Key="Drives_Empty">No drives discovered. Use Refresh or Browse Folder.</sys:String>
+    <sys:String x:Key="Drives_SingleScanNote">Only one scan can run at a time.</sys:String>
+
     <sys:String x:Key="Node_SkippedLink"> (skipped link)</sys:String>
     <sys:String x:Key="Node_Inaccessible"> (inaccessible)</sys:String>
     <sys:String x:Key="Node_Error"> (error)</sys:String>
