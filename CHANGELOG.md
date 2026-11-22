@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0 — 2026-11-22
+
+### Added
+- Stable ExplorerPilot **v2.0.0** (ProductVersion `2.0.0`, FileVersion `2.0.0.0`)
+- Modern **left sidebar navigation** with Overview / Disk Analysis / Monitoring / Tools + pinned **Settings**
+- Collapsible sidebar with persisted expand/collapse preference
+- Headerless workspace host keeps ViewModel/session state across page switches
+- **Settings** page for Appearance (Light/Dark, English/Türkçe) and Application info (version, GitHub)
+- Multi-drive discovery and Drives overview
+- Professional Dashboard (KPIs, volumes, last scan, shortcuts)
+- Scheduled Scans (Daily/Weekly/Monthly/Manual) with busy/skip and auto-snapshot on success
+- Snapshot Comparison, Trends, Cleanup preview-only recommendations
+- CSV / HTML / JSON report export
+- EN/TR localization and Light/Dark/System themes (System remains backward-compatible in settings store)
+
+### Improved
+- Deterministic DiskScanner cancellation handling for Preparing/progress races
+- Toolbar horizontal scrollbar removed at the source (theme/language moved to Settings)
+- Scan Activity column sizing refined for common desktop layouts
+
+### Notes
+- Portable package: `artifacts/v2.0/ExplorerPilot-2.0.0-win-x64-portable.zip`
+- Does **not** replace `artifacts/v1.1` / v1.1.0 or `artifacts/v2.0-rc1`
+- Builds are **unsigned** and may trigger Windows SmartScreen (see `docs/CODE_SIGNING.md`)
+- Snapshot schema remains **1.0**
+- Scheduled scans run only while the application is open
+
 ## 2.0.0-rc.1 — 2026-11-22
 
 ### Added / promoted

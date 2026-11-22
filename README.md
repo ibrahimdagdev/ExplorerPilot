@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Application** | ExplorerPilot |
-| **Version** | 2.0.0-rc.1 (Release Candidate) / 1.1.0 (latest stable release) |
+| **Version** | 2.0.0 (stable) / 1.1.0 (previous stable) |
 | **Developer** | İbrahim Dağ |
 | **Publisher** | Tasarisoft |
 | **Website** | [tasarisoft.com](https://tasarisoft.com) |
@@ -14,14 +14,14 @@
 
 Inspired by the *purpose* of tools such as TreeSize, WizTree, and WinDirStat — but implemented independently, without copying code, assets, branding, or UI designs.
 
-## Features (v2.0 Release Candidate)
+## Features (v2.0.0)
 
 - Scan a complete drive or a selected folder (background worker, cancellable)
-- **Sidebar navigation** (collapsible) across **12 screens**: Dashboard, Drives, Directory Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Trends, Scheduled Scans, Cleanup
+- **Sidebar navigation** (collapsible) across **13 screens**: Dashboard, Drives, Directory Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Trends, Scheduled Scans, Cleanup, Settings
 - Multi-drive discovery, Dashboard KPIs, and **Scheduled Scans** (in-app Daily/Weekly/Monthly/Manual with auto-snapshot on success)
 - Snapshot save/import/export, comparison, cleanup recommendations (**preview / report-only** — never auto-deletes), trends
 - CSV / HTML / JSON reporting with formula-injection and HTML escaping protections
-- EN / TR localization and Light / Dark / System themes (persisted with sidebar expand/collapse)
+- EN / TR localization and Light / Dark / System themes (persisted with sidebar expand/collapse via Settings)
 - Per-monitor DPI awareness; portable Windows x64 self-contained package
 - Local diagnostic logs only — **no telemetry by default**
 
@@ -30,7 +30,7 @@ Inspired by the *purpose* of tools such as TreeSize, WizTree, and WinDirStat —
 - Multi-drive overview + professional Dashboard
 - Scheduled Scans with busy/skip concurrency guard
 - Modern left sidebar replacing the overflowing tab strip
-- Stabilized cancel/restart, theme/language persistence (Settings page), and RC portable packaging under `artifacts/v2.0-rc1`
+- Settings page for theme/language; stable portable packaging under `artifacts/v2.0`
 
 ### v1.1.0 highlights (still in the product)
 
@@ -92,20 +92,20 @@ dotnet run --project src/ExplorerPilot.App/ExplorerPilot.App.csproj -c Release
 ## Portable release package
 
 ```powershell
-# v2.0 Release Candidate
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-portable.ps1 -Version 2.0.0-rc.1 -OutRoot artifacts/v2.0-rc1
+# v2.0.0 stable
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-portable.ps1 -Version 2.0.0 -OutRoot artifacts/v2.0
 
-# v1.1.0 stable (unchanged packaging path)
+# v1.1.0 previous stable (unchanged packaging path)
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-portable.ps1 -Version 1.1.0
 ```
 
-Outputs (RC1):
+Outputs (v2.0.0):
 
-- `artifacts/v2.0-rc1/publish-win-x64/` — published files
-- `artifacts/v2.0-rc1/ExplorerPilot-2.0.0-rc.1-win-x64-portable.zip`
-- `artifacts/v2.0-rc1/ExplorerPilot-2.0.0-rc.1-win-x64-portable.sha256`
+- `artifacts/v2.0/publish-win-x64/` — published files
+- `artifacts/v2.0/ExplorerPilot-2.0.0-win-x64-portable.zip`
+- `artifacts/v2.0/ExplorerPilot-2.0.0-win-x64-portable.sha256`
 
-v1.1.0 stable outputs remain under `artifacts/v1.1/` and are not overwritten by RC packaging.
+Previous packages under `artifacts/v1.1/` and `artifacts/v2.0-rc1/` are left untouched.
 
 **Code signing:** release scripts do **not** Authenticode-sign binaries. Builds are **unsigned** and may trigger Windows SmartScreen. See [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
 

@@ -1,34 +1,14 @@
-using System.Reflection;
-using ExplorerPilot.App.Services;
-
 namespace ExplorerPilot.Tests;
 
-/// <summary>Release Candidate identity checks for v2.0.0-rc.1.</summary>
+/// <summary>
+/// RC1 identity assertions were replaced by <see cref="StableReleaseVersionTests"/> for v2.0.0.
+/// This empty marker file is intentionally removed of RC-specific asserts to avoid conflicting expectations.
+/// </summary>
 public sealed class RcReleaseCandidateTests
 {
     [Fact]
-    public void AppAssembly_ReportsRcProductVersion()
+    public void StableSuite_OwnsCurrentVersionIdentity()
     {
-        var asm = typeof(ApplicationInfoService).Assembly;
-        var informational = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion;
-        Assert.Equal("2.0.0-rc.1", informational);
-
-        var fileVersion = asm.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
-        Assert.Equal("2.0.0.1", fileVersion);
-
-        var assemblyVersion = asm.GetName().Version;
-        Assert.NotNull(assemblyVersion);
-        Assert.Equal(new Version(2, 0, 0, 0), assemblyVersion);
-    }
-
-    [Fact]
-    public void ApplicationInfoService_BrandedLabel_IncludesRcVersion()
-    {
-        var info = new ApplicationInfoService();
-        Assert.Equal("2.0.0-rc.1", info.Version);
-        Assert.Equal("v2.0.0-rc.1", info.VersionLabel);
-        Assert.Contains("2.0.0-rc.1", info.BrandedVersionLabel, StringComparison.Ordinal);
-        Assert.Equal("ExplorerPilot", info.ProductName);
+        Assert.Equal("2.0.0", new ExplorerPilot.App.Services.ApplicationInfoService().Version);
     }
 }

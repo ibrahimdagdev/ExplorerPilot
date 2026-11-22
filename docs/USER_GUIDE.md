@@ -1,4 +1,4 @@
-# ExplorerPilot — User guide (v2.0 RC)
+# ExplorerPilot — User guide (v2.0.0)
 
 ## Requirements
 
@@ -8,7 +8,7 @@
 
 ## Install / run (portable)
 
-1. Unzip `ExplorerPilot-2.0.0-rc.1-win-x64-portable.zip` (or the v1.1.0 stable zip) to a folder you can write to.
+1. Unzip `ExplorerPilot-2.0.0-win-x64-portable.zip` (or the previous v1.1.0 zip) to a folder you can write to.
 2. Verify the SHA-256 checksum (see companion `.sha256` file).
 3. Run `ExplorerPilot.exe`.
 4. Windows may show SmartScreen for unsigned builds — see `docs/CODE_SIGNING.md`.
