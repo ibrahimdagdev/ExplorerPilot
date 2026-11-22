@@ -15,7 +15,7 @@ public sealed class RcReleaseCandidateTests
         Assert.Equal("2.0.0-rc.1", informational);
 
         var fileVersion = asm.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
-        Assert.Equal("2.0.0.0", fileVersion);
+        Assert.Equal("2.0.0.1", fileVersion);
 
         var assemblyVersion = asm.GetName().Version;
         Assert.NotNull(assemblyVersion);
