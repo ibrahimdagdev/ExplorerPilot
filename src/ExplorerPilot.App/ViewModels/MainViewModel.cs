@@ -1493,7 +1493,31 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
     private void RefreshLocalizedChrome()
     {
-        _themeService.RefreshOptionDisplayNames(_localization.GetString);
+        // Updating DisplayName can make WPF ComboBoxes re-evaluate SelectedItem and fire
+        // TwoWay writes. Suppress preference persistence for the duration of the refresh.
+        _suppressThemePreferenceWrite = true;
+        _suppressLanguagePreferenceWrite = true;
+        try
+        {
+            _themeService.RefreshOptionDisplayNames(_localization.GetString);
+            var theme = SelectedTheme;
+            if (theme is not null)
+            {
+                SelectedTheme = theme;
+            }
+
+            var language = SelectedLanguage;
+            if (language is not null)
+            {
+                SelectedLanguage = language;
+            }
+        }
+        finally
+        {
+            _suppressThemePreferenceWrite = false;
+            _suppressLanguagePreferenceWrite = false;
+        }
+
         foreach (var option in LargestFilesLimitOptions)
         {
             option.RefreshDisplayName(_localization);

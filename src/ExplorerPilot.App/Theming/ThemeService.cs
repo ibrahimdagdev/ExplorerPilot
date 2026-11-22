@@ -51,9 +51,16 @@ public sealed class ThemeService : IThemeService
 
             var settings = _settingsStore.Load();
             Preference = ParseThemePreference(settings.Theme);
+            // Never rewrite settings during Initialize — missing/corrupt files stay absent
+            // until the user explicitly changes the theme (default effective theme is Light).
             ApplyThemeCore(force: true);
             SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
             _initialized = true;
+            _logger.LogInformation(
+                "Theme initialized from {Path}: preference={Preference}, effective={Effective}",
+                _settingsStore.SettingsPath,
+                Preference,
+                EffectiveTheme);
         }
     }
 

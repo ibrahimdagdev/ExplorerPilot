@@ -81,7 +81,8 @@ public sealed class LocalizationTests
     [Fact]
     public void UserSettingsStore_PersistsLanguageWithoutClearingTheme()
     {
-        var store = new UserSettingsStore();
+        using var temp = TemporaryDirectory.Create();
+        var store = new UserSettingsStore(Path.Combine(temp.Path, "settings.json"));
         store.Update(s =>
         {
             s.Theme = "Dark";

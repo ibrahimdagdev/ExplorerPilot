@@ -120,6 +120,7 @@
                           Style="{StaticResource ThemeSelectorComboBoxStyle}"
                           ItemsSource="{Binding ThemeOptions}"
                           SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                          SelectedValuePath="Mode"
                           DisplayMemberPath="DisplayName"
                           ToolTip="{DynamicResource Theme_SelectorTooltip}"
                           VerticalAlignment="Center" />

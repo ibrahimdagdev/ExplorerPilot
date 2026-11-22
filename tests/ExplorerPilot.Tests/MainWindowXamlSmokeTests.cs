@@ -156,7 +156,13 @@ public sealed class MainWindowXamlSmokeTests
             builder.AddProvider(NullLoggerProvider.Instance);
             builder.SetMinimumLevel(LogLevel.Warning);
         });
-        services.AddSingleton<UserSettingsStore>();
+        // Isolate preferences so smoke tests never rewrite the developer's LocalAppData settings.
+        var settingsPath = Path.Combine(
+            Path.GetTempPath(),
+            "ExplorerPilot-Tests",
+            Guid.NewGuid().ToString("N"),
+            "settings.json");
+        services.AddSingleton(new UserSettingsStore(settingsPath));
         services.AddExplorerPilotInfrastructure();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
