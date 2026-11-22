@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0-rc.1 — 2026-11-22
+
+### Added / promoted
+- Release Candidate packaging for ExplorerPilot **v2.0** (`2.0.0-rc.1`)
+- Modern **left sidebar navigation** with Overview / Disk Analysis / Monitoring / Tools categories (12 workspace pages preserved)
+- Collapsible sidebar with persisted expand/collapse preference
+- Headerless workspace host keeps ViewModel/session state across page switches
+
+### Includes (from v2.0 alpha → beta)
+- Multi-drive discovery and Drives overview
+- Professional Dashboard (KPIs, volumes, last scan, shortcuts)
+- Scheduled Scans (Daily/Weekly/Monthly/Manual) with busy/skip and auto-snapshot on success
+- Snapshot Comparison, Trends, Cleanup preview-only recommendations
+- CSV / HTML / JSON report export
+- EN/TR localization and Light/Dark/System themes
+
+### Fixed / improved (RC hardening)
+- Deterministic DiskScanner cancellation handling for Preparing/progress races
+- Toolbar overflow uses Auto horizontal scroll only when content exceeds viewport
+- Scan Activity column sizing refined for 1280×720–1920×1080 layouts
+
+### Notes
+- Branch: `release/v2.0-rc1` (from `feature/v2.0-beta-stabilization`)
+- Portable package under `artifacts/v2.0` — **does not** replace `artifacts/v1.1` / v1.1.0 Release
+- No public GitHub Release for this RC stage unless explicitly published later
+- Snapshot schema remains **1.0**
+
 ## 2.0.0-beta.1 — 2026-11-22
 
 ### Fixed / improved

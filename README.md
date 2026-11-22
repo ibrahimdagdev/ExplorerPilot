@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Application** | ExplorerPilot |
-| **Version** | 2.0.0-beta.1 (development) / 1.1.0 (latest release) |
+| **Version** | 2.0.0-rc.1 (Release Candidate) / 1.1.0 (latest stable release) |
 | **Developer** | İbrahim Dağ |
 | **Publisher** | Tasarisoft |
 | **Website** | [tasarisoft.com](https://tasarisoft.com) |
@@ -14,24 +14,31 @@
 
 Inspired by the *purpose* of tools such as TreeSize, WizTree, and WinDirStat — but implemented independently, without copying code, assets, branding, or UI designs.
 
-## Features (v1.1.0 / v2.0 alpha)
+## Features (v2.0 Release Candidate)
 
 - Scan a complete drive or a selected folder (background worker, cancellable)
-- Multi-drive overview, Dashboard KPIs, and **Scheduled Scans** (in-app Daily/Weekly/Monthly/Manual plans with auto-snapshot on success)
-- Nine-module workspace: Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Cleanup, Trends
-- Snapshot save/import/export, comparison, cleanup recommendations (report-only), trends
-- CSV / HTML reporting with formula-injection and HTML escaping protections
-- EN / TR localization and Light / Dark / System themes
+- **Sidebar navigation** (collapsible) across **12 screens**: Dashboard, Drives, Directory Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Trends, Scheduled Scans, Cleanup
+- Multi-drive discovery, Dashboard KPIs, and **Scheduled Scans** (in-app Daily/Weekly/Monthly/Manual with auto-snapshot on success)
+- Snapshot save/import/export, comparison, cleanup recommendations (**preview / report-only** — never auto-deletes), trends
+- CSV / HTML / JSON reporting with formula-injection and HTML escaping protections
+- EN / TR localization and Light / Dark / System themes (persisted with sidebar expand/collapse)
 - Per-monitor DPI awareness; portable Windows x64 self-contained package
 - Local diagnostic logs only — **no telemetry by default**
 
-### v1.1.0 highlights
+### v2.0 highlights (vs 1.1.0)
 
-- **Faster scanning:** `DirectoryInfo.EnumerateFileSystemInfos` reuses Find* metadata (attributes, times, length) instead of per-entry `GetAttributes` + `FileInfo` round-trips
-- **Optimized scanner is the default** via DI (`IDiskScanner` → `DiskScanner` / `FileSystemInfoMetadata`); legacy mode retained for A/B benchmarks
-- **Responsive Explorer tree:** child nodes materialize lazily on expand so large trees do not freeze the UI on ApplyResult
+- Multi-drive overview + professional Dashboard
+- Scheduled Scans with busy/skip concurrency guard
+- Modern left sidebar replacing the overflowing tab strip
+- Stabilized cancel/restart, theme/language persistence, and RC portable packaging under `artifacts/v2.0`
+
+### v1.1.0 highlights (still in the product)
+
+- **Faster scanning:** `DirectoryInfo.EnumerateFileSystemInfos` reuses Find* metadata
+- **Optimized scanner is the default** via DI; legacy mode retained for A/B benchmarks
+- **Responsive Explorer tree:** lazy child materialization on expand
 - **Scan timing:** separate `ScanCore` vs `ApplyResult` durations in diagnostic logs
-- Portable package published under `artifacts/v1.1` (does not replace v1.0 packages)
+- Stable portable package under `artifacts/v1.1` (unchanged by v2.0 RC packaging)
 
 ## Technology stack
 
@@ -85,14 +92,20 @@ dotnet run --project src/ExplorerPilot.App/ExplorerPilot.App.csproj -c Release
 ## Portable release package
 
 ```powershell
+# v2.0 Release Candidate
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-portable.ps1 -Version 2.0.0-rc.1
+
+# v1.1.0 stable (unchanged packaging path)
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-portable.ps1 -Version 1.1.0
 ```
 
-Outputs (default for 1.1.0):
+Outputs (RC default for `2.0.0-rc.1`):
 
-- `artifacts/v1.1/publish-win-x64/` — published files
-- `artifacts/v1.1/ExplorerPilot-1.1.0-win-x64-portable.zip`
-- `artifacts/v1.1/ExplorerPilot-1.1.0-win-x64-portable.sha256`
+- `artifacts/v2.0/publish-win-x64/` — published files
+- `artifacts/v2.0/ExplorerPilot-2.0.0-rc.1-win-x64-portable.zip`
+- `artifacts/v2.0/ExplorerPilot-2.0.0-rc.1-win-x64-portable.sha256`
+
+v1.1.0 stable outputs remain under `artifacts/v1.1/` and are not overwritten by RC packaging.
 
 **Code signing:** release scripts do **not** Authenticode-sign binaries. Builds are **unsigned** and may trigger Windows SmartScreen. See [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
 

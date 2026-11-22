@@ -1,4 +1,4 @@
-# ExplorerPilot 1.0 — User guide
+# ExplorerPilot — User guide (v2.0 RC)
 
 ## Requirements
 
@@ -8,12 +8,12 @@
 
 ## Install / run (portable)
 
-1. Unzip `ExplorerPilot-1.0.0-win-x64-portable.zip` to a folder you can write to.
+1. Unzip `ExplorerPilot-2.0.0-rc.1-win-x64-portable.zip` (or the v1.1.0 stable zip) to a folder you can write to.
 2. Verify the SHA-256 checksum (see companion `.sha256` file).
 3. Run `ExplorerPilot.exe`.
 4. Windows may show SmartScreen for unsigned builds — see `docs/CODE_SIGNING.md`.
 
-Settings, snapshots, and logs are stored under:
+Settings, snapshots, schedules, and logs are stored under:
 
 `%LocalAppData%\ExplorerPilot\`
 
@@ -21,15 +21,16 @@ Settings, snapshots, and logs are stored under:
 
 1. Select a drive or **Browse Folder**.
 2. Click **Start Scan** (Cancel stops the scan; totals may be incomplete).
-3. Explore sizes in **Explorer**, **Largest Files**, **File Types**, and **Treemap**.
+3. Use the **left sidebar** to open Dashboard, Drives, Explorer, Largest Files, File Types, Search, Duplicates, Treemap, Comparison, Trends, Scheduled Scans, or Cleanup.
 4. Use **Search** / **Duplicates** against the last completed scan.
 5. Save snapshots from **Comparison**; review growth in **Trends**.
 6. **Cleanup** lists recommendations only — ExplorerPilot does **not** delete files for you.
-7. Export CSV/HTML reports from the toolbar when a scan is available.
+7. Export CSV / HTML / JSON reports from the toolbar when a scan is available.
+8. Optional: create **Scheduled Scans** (runs only while the app is open).
 
-## Language & theme
+## Language, theme & sidebar
 
-Use the toolbar selectors for EN/TR and Light/Dark/System themes. Changes apply immediately.
+Use the toolbar selectors for EN/TR and Light/Dark/System themes. Use **Collapse sidebar** to switch icon-only mode. Preferences (including sidebar expand/collapse) persist across launches.
 
 ## Privacy
 
