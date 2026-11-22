@@ -2871,7 +2871,7 @@
 
                 <Border Grid.Row="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <DockPanel Margin="0,0,0,12">
+                        <DockPanel Margin="0,0,0,8">
                             <TextBlock Text="{DynamicResource Activity_Title}"
                                        Style="{StaticResource SectionTitleStyle}"
                                        Margin="0"
@@ -2886,9 +2886,22 @@
                                        ToolTip="{Binding ScanStatus}" />
                         </DockPanel>
 
-                        <ProgressBar IsIndeterminate="{Binding IsScanning}"
-                                     Height="6"
-                                     Margin="0,0,0,14" />
+                        <!-- Progress only while scanning/exporting; collapsed when Ready/idle (no empty full-bleed track). -->
+                        <ProgressBar IsIndeterminate="True">
+                            <ProgressBar.Style>
+                                <Style TargetType="ProgressBar" BasedOn="{StaticResource ScanActivityProgressBarStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsScanning}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsExporting}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ProgressBar.Style>
+                        </ProgressBar>
 
                         <StackPanel Margin="0,0,0,12">
                             <TextBlock Text="{DynamicResource Activity_CurrentPath}" Style="{StaticResource MetricLabelStyle}" />
