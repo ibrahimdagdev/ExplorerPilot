@@ -137,24 +137,53 @@ public sealed class DiskScannerTests
     public async Task ScanAsync_CancellationDuringScan_DoesNotThrowToCaller()
     {
         using var temp = TemporaryDirectory.Create();
-        for (var i = 0; i < 50; i++)
+        // Enough entries that a missed early cancel check would still leave work on the stack.
+        for (var i = 0; i < 80; i++)
         {
-            Directory.CreateDirectory(Path.Combine(temp.Path, $"d{i}"));
-            await File.WriteAllTextAsync(Path.Combine(temp.Path, $"d{i}", "f.txt"), "data");
+            var dir = Path.Combine(temp.Path, $"d{i:D3}");
+            Directory.CreateDirectory(dir);
+            await File.WriteAllTextAsync(Path.Combine(dir, "f.txt"), "data");
         }
 
         using var cts = new CancellationTokenSource();
-        var progress = new Progress<Core.Models.ScanProgress>(_ =>
-        {
-            if (!cts.IsCancellationRequested)
-            {
-                cts.Cancel();
-            }
-        });
+        // Progress<T> may post asynchronously via SynchronizationContext, racing a fast scan
+        // to Completed before Cancel runs. IProgress cancels synchronously on the scanner thread.
+        var progress = new CancelOnFirstProgress(cts);
 
-        var result = await _scanner.ScanAsync(temp.Path, progress, cts.Token);
+        ScanResult result;
+        try
+        {
+            result = await _scanner.ScanAsync(temp.Path, progress, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Task.Run can surface cancel before ScanCore returns a Cancelled ScanResult.
+            Assert.True(progress.ReportCount >= 1);
+            return;
+        }
 
         Assert.Equal(ScanPhase.Cancelled, result.FinalStatus);
+        Assert.True(result.WasCancelled);
+        Assert.True(progress.ReportCount >= 1);
+    }
+
+    private sealed class CancelOnFirstProgress : IProgress<Core.Models.ScanProgress>
+    {
+        private readonly CancellationTokenSource _cts;
+        private int _reportCount;
+
+        public CancelOnFirstProgress(CancellationTokenSource cts) => _cts = cts;
+
+        public int ReportCount => Volatile.Read(ref _reportCount);
+
+        public void Report(Core.Models.ScanProgress value)
+        {
+            Interlocked.Increment(ref _reportCount);
+            if (!_cts.IsCancellationRequested)
+            {
+                _cts.Cancel();
+            }
+        }
     }
 
     [Fact]

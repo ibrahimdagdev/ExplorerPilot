@@ -97,7 +97,27 @@ public sealed class DiskScanner : IDiskScanner
         string normalizedRoot;
         try
         {
+            // Honour cancel from Preparing progress before filesystem work (sync or async Progress handlers).
+            cancellationToken.ThrowIfCancellationRequested();
             normalizedRoot = Path.GetFullPath(rootPath);
+        }
+        catch (OperationCanceledException)
+        {
+            stopwatch.Stop();
+            Report(ScanPhase.Cancelled, rootPath, "Scan cancelled");
+            return new ScanResult
+            {
+                RootNode = new FileSystemNode
+                {
+                    Name = rootPath,
+                    FullPath = rootPath,
+                    IsDirectory = true,
+                    ScanStatus = NodeScanStatus.Completed
+                },
+                Duration = stopwatch.Elapsed,
+                Errors = errors,
+                FinalStatus = ScanPhase.Cancelled
+            };
         }
         catch (Exception ex)
         {
@@ -176,6 +196,7 @@ public sealed class DiskScanner : IDiskScanner
 
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             PushChildren(rootNode, stack, errors, largestFiles, fileTypes, ref scannedFiles, ref scannedDirectories, ref totalBytes, ThrottledReport, cancellationToken);
 
             while (stack.Count > 0)

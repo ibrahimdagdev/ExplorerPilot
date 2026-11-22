@@ -33,14 +33,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header toolbar (horizontal scroll on narrow / high-DPI layouts) -->
+        <!-- Header toolbar (horizontal scroll only when content overflows) -->
         <Border Grid.Row="0" Style="{StaticResource ToolbarStyle}">
-            <!-- Hidden (not Auto): avoids a thin full-width scrollbar strip under the toolbar chrome. -->
-            <ScrollViewer HorizontalScrollBarVisibility="Hidden"
-                          VerticalScrollBarVisibility="Disabled"
+            <ScrollViewer Style="{StaticResource ToolbarScrollViewerStyle}"
                           Focusable="False"
                           CanContentScroll="False">
-            <Grid MinWidth="980">
+            <Grid MinWidth="900">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="12" />
@@ -236,9 +234,9 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="65*" MinWidth="320" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="35*" MinWidth="260" />
+                <ColumnDefinition Width="70*" MinWidth="280" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="30*" MinWidth="220" MaxWidth="420" />
             </Grid.ColumnDefinitions>
 
             <!-- Left sidebar navigation -->

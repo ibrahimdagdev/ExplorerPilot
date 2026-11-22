@@ -52,6 +52,7 @@ public sealed class MainWindowXamlSmokeTests
                 Assert.Equal(12, viewModel.AllNavItems.Count());
                 Assert.Equal(0, viewModel.SelectedMainTabIndex);
                 Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == 0 && n.IsSelected);
+                Assert.True(viewModel.IsSidebarExpanded);
 
                 if (FindTabControl(window) is { } tabs)
                 {
@@ -65,9 +66,11 @@ public sealed class MainWindowXamlSmokeTests
                         Assert.False(string.IsNullOrWhiteSpace(headerText),
                             $"Tab {i} Header must resolve to a non-empty localized string.");
 
-                        viewModel.SelectedMainTabIndex = i;
+                        viewModel.NavigateToPageCommand.Execute(i);
                         window.UpdateLayout();
                         Assert.Equal(i, tabs.SelectedIndex);
+                        Assert.Equal(i, viewModel.SelectedMainTabIndex);
+                        Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == i && n.IsSelected);
                         Assert.NotNull(tab.Content);
                     }
                 }
@@ -76,12 +79,65 @@ public sealed class MainWindowXamlSmokeTests
                     Assert.Fail("Workspace TabControl was not found.");
                 }
 
+                // Dashboard shortcut commands keep SelectedMainTabIndex + sidebar selection in sync.
+                viewModel.NavigateToPageCommand.Execute(0);
+                window.UpdateLayout();
+                viewModel.Dashboard.OpenTreemapCommand.Execute(null);
+                Assert.Equal(DashboardTabIndex.Treemap, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == DashboardTabIndex.Treemap && n.IsSelected);
+                viewModel.Dashboard.OpenCleanupCommand.Execute(null);
+                Assert.Equal(DashboardTabIndex.Cleanup, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == DashboardTabIndex.Cleanup && n.IsSelected);
+                viewModel.Dashboard.OpenTrendsCommand.Execute(null);
+                Assert.Equal(DashboardTabIndex.Trends, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == DashboardTabIndex.Trends && n.IsSelected);
+                viewModel.Dashboard.OpenExplorerCommand.Execute(null);
+                Assert.Equal(DashboardTabIndex.Explorer, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == DashboardTabIndex.Explorer && n.IsSelected);
+
+                // Language switch must keep the selected page.
+                var pageBeforeLanguage = viewModel.SelectedMainTabIndex;
+                localization.SetPreference(AppLanguageMode.Turkish);
+                window.UpdateLayout();
+                Assert.Equal(pageBeforeLanguage, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == pageBeforeLanguage && n.IsSelected);
+                Assert.Contains(viewModel.AllNavItems, n => n.Title.Length > 0 && n.Title != n.TitleKey);
+                localization.SetPreference(AppLanguageMode.English);
+                window.UpdateLayout();
+                Assert.Equal(pageBeforeLanguage, viewModel.SelectedMainTabIndex);
+
+                // Theme switch keeps navigation selection (brush resources swap under DynamicResource).
+                var themeService = services.GetRequiredService<IThemeService>();
+                var pageBeforeTheme = viewModel.SelectedMainTabIndex;
+                themeService.SetPreference(AppThemeMode.Dark);
+                window.UpdateLayout();
+                Assert.Equal(pageBeforeTheme, viewModel.SelectedMainTabIndex);
+                themeService.SetPreference(AppThemeMode.Light);
+                window.UpdateLayout();
+                Assert.Equal(pageBeforeTheme, viewModel.SelectedMainTabIndex);
+
+                // Collapse persistence: write settings, then verify store round-trip.
                 viewModel.IsSidebarExpanded = false;
                 window.UpdateLayout();
                 Assert.Equal(MainViewModel.CollapsedSidebarWidth, viewModel.SidebarWidth);
+                var settingsStore = services.GetRequiredService<UserSettingsStore>();
+                Assert.False(settingsStore.Load().SidebarExpanded);
+
                 viewModel.IsSidebarExpanded = true;
                 window.UpdateLayout();
                 Assert.Equal(MainViewModel.ExpandedSidebarWidth, viewModel.SidebarWidth);
+                Assert.True(settingsStore.Load().SidebarExpanded);
+
+                // Responsive workspace sizes used in beta acceptance (layout, not pixel screenshots).
+                foreach (var (width, height) in new[] { (1280, 720), (1366, 768), (1920, 1080) })
+                {
+                    window.Width = width;
+                    window.Height = height;
+                    window.UpdateLayout();
+                    Assert.True(window.ActualWidth > 0);
+                    Assert.True(window.ActualHeight > 0);
+                    Assert.Equal(pageBeforeTheme, viewModel.SelectedMainTabIndex);
+                }
 
                 window.Close();
             }
