@@ -202,7 +202,13 @@ public partial class TrendsTabViewModel : ObservableObject, IDisposable
     private bool CanAnalyze() => !IsBusy;
 
     [RelayCommand(CanExecute = nameof(CanCancel))]
-    private void CancelWork() => CancelWorkCore();
+    private void CancelWork()
+    {
+        CancelWorkCore();
+        IsBusy = false;
+        ProgressText = string.Empty;
+        StatusText = _localization.GetString("Trends_Cancelled");
+    }
 
     private bool CanCancel() => IsBusy;
 

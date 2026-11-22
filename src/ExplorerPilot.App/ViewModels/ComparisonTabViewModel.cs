@@ -183,6 +183,8 @@ public partial class ComparisonTabViewModel : ObservableObject, IDisposable
     public void OnScanStarting()
     {
         CancelWorkCore();
+        IsBusy = false;
+        ProgressText = string.Empty;
         _currentScan = null;
         _scanSessionId = Guid.Empty;
         HasCurrentScan = false;
@@ -216,11 +218,20 @@ public partial class ComparisonTabViewModel : ObservableObject, IDisposable
                 return;
             }
 
+            var leftId = SelectedLeft?.Id;
+            var rightId = SelectedRight?.Id;
             Snapshots.Clear();
             foreach (var info in list)
             {
                 Snapshots.Add(ToListItem(info));
             }
+
+            SelectedLeft = leftId is { } lid
+                ? Snapshots.FirstOrDefault(s => s.Id == lid)
+                : SelectedLeft;
+            SelectedRight = rightId is { } rid
+                ? Snapshots.FirstOrDefault(s => s.Id == rid)
+                : SelectedRight;
 
             StatusText = _localization.GetString("Comparison_SnapshotCountFormat", Snapshots.Count);
         }).ConfigureAwait(true);
@@ -497,9 +508,19 @@ public partial class ComparisonTabViewModel : ObservableObject, IDisposable
     private bool CanDelete() => !IsBusy && (SelectedLeft is not null || SelectedRight is not null);
 
     [RelayCommand(CanExecute = nameof(CanCancelWork))]
-    private void CancelWork() => CancelWorkCore();
+    private void CancelWork()
+    {
+        CancelWorkCore();
+        // Standalone cancel (no replacement RunWorkAsync) must clear busy; otherwise
+        // CanSave/CanCompare stay disabled forever after CancelWorkCore bumps the version.
+        IsBusy = false;
+        ProgressText = string.Empty;
+        StatusText = _localization.GetString("Comparison_Cancelled");
+    }
 
     private bool CanCancelWork() => IsBusy;
+
+    private bool _catalogDirty;
 
     private void CancelWorkCore()
     {
@@ -555,6 +576,11 @@ public partial class ComparisonTabViewModel : ObservableObject, IDisposable
             {
                 IsBusy = false;
                 ProgressText = string.Empty;
+                if (_catalogDirty)
+                {
+                    _catalogDirty = false;
+                    _ = RefreshSnapshotsAsync();
+                }
             }
         }
     }
@@ -864,6 +890,7 @@ public partial class ComparisonTabViewModel : ObservableObject, IDisposable
     {
         if (IsBusy)
         {
+            _catalogDirty = true;
             return;
         }
 

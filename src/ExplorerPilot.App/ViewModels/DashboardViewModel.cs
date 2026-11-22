@@ -209,8 +209,13 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         _boundSessionId = Guid.Empty;
         _boundIncomplete = false;
         _boundCompletedAt = null;
+        _lastSummary = null;
         HasScanSummary = false;
+        HasCleanupSummary = false;
         ShowIncompleteWarning = false;
+        LargestFiles.Clear();
+        LargestFolders.Clear();
+        Categories.Clear();
         StatusText = _localization.GetString("Dashboard_Scanning");
     }
 

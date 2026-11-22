@@ -192,7 +192,11 @@ public partial class CleanupTabViewModel : ObservableObject
         {
             ResultsStale = true;
             StatusText = _localization.GetString("Cleanup_ResultsStale");
+            return;
         }
+
+        ResultsStale = false;
+        StatusText = _localization.GetString("Cleanup_StatusReady");
     }
 
     public void OnScanStarting()

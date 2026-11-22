@@ -653,10 +653,15 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
                 plan.Id,
                 PathRedaction.ForLog(path));
 
-            var result = await _diskScanner.ScanAsync(path, progress, _scanCts.Token).ConfigureAwait(true);
-            LastResult = result;
-            _lastResultForLocalization = result;
-            ApplyResult(result);
+            // ConfigureAwait(false) so StopAsync/OnExit waiting off the UI thread can complete
+            // after cancel without deadlocking on a UI-bound continuation.
+            var result = await _diskScanner.ScanAsync(path, progress, _scanCts.Token).ConfigureAwait(false);
+            await RunOnUiAsync(() =>
+            {
+                LastResult = result;
+                _lastResultForLocalization = result;
+                ApplyResult(result);
+            }).ConfigureAwait(false);
 
             if (result.WasCancelled)
             {
@@ -684,13 +689,22 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
                 var snapshotName = string.IsNullOrWhiteSpace(plan.Name)
                     ? $"Scheduled {DateTime.Now:yyyy-MM-dd HH:mm}"
                     : $"{plan.Name} ({DateTime.Now:yyyy-MM-dd HH:mm})";
-                var info = await _snapshotStore.SaveAsync(result, snapshotName, cancellationToken: CancellationToken.None)
-                    .ConfigureAwait(true);
+                var info = await _snapshotStore
+                    .SaveAsync(result, snapshotName, cancellationToken: _scanCts?.Token ?? cancellationToken)
+                    .ConfigureAwait(false);
                 return new ScheduledScanRunResult
                 {
                     PlanId = plan.Id,
                     Outcome = ScheduledScanRunOutcome.Succeeded,
                     SnapshotId = info.Id
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ScheduledScanRunResult
+                {
+                    PlanId = plan.Id,
+                    Outcome = ScheduledScanRunOutcome.Cancelled
                 };
             }
             catch (Exception ex)
@@ -706,8 +720,11 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         }
         catch (OperationCanceledException)
         {
-            ApplyStatus(UiStatusKind.ScanCancelled);
-            ApplyCompleteness(CompletenessKind.Cancelled);
+            await RunOnUiAsync(() =>
+            {
+                ApplyStatus(UiStatusKind.ScanCancelled);
+                ApplyCompleteness(CompletenessKind.Cancelled);
+            }).ConfigureAwait(false);
             return new ScheduledScanRunResult
             {
                 PlanId = plan.Id,
@@ -717,8 +734,11 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         catch (Exception ex)
         {
             _logger.LogError(ex, "Scheduled scan failed for {Path}", PathRedaction.ForLog(path));
-            ApplyStatus(UiStatusKind.ScanFailed, _localization.GetString("Error_Generic"));
-            ApplyCompleteness(CompletenessKind.Failed);
+            await RunOnUiAsync(() =>
+            {
+                ApplyStatus(UiStatusKind.ScanFailed, _localization.GetString("Error_Generic"));
+                ApplyCompleteness(CompletenessKind.Failed);
+            }).ConfigureAwait(false);
             return new ScheduledScanRunResult
             {
                 PlanId = plan.Id,
@@ -728,10 +748,31 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         }
         finally
         {
-            IsScanning = false;
-            _scanCts?.Dispose();
-            _scanCts = null;
+            await RunOnUiAsync(() =>
+            {
+                IsScanning = false;
+                _scanCts?.Dispose();
+                _scanCts = null;
+            }).ConfigureAwait(false);
         }
+    }
+
+    private static Task RunOnUiAsync(Action action)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null)
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        if (dispatcher.CheckAccess())
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        return dispatcher.InvokeAsync(action).Task;
     }
 
     private static DriveInfoModel ToDriveInfoModel(DriveInformation drive) =>

@@ -25,5 +25,6 @@ public interface IScheduledScanService : IAsyncDisposable
 
     Task<ScheduledScanRunResult> RunNowAsync(Guid planId, CancellationToken cancellationToken = default);
 
+    /// <summary>Cancels the in-flight run (if any) and waits briefly for it to unwind.</summary>
     Task CancelActiveAsync();
 }

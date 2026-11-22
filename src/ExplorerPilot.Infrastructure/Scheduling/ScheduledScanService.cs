@@ -20,6 +20,7 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
     private CancellationTokenSource? _activeRunCts;
+    private Task? _activeRunTask;
     private int _persistVersion;
     private bool _started;
     private bool _disposed;
@@ -226,7 +227,7 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
         return await ExecutePlanAsync(plan, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task CancelActiveAsync()
+    public async Task CancelActiveAsync()
     {
         try
         {
@@ -237,7 +238,27 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
             // ignore
         }
 
-        return Task.CompletedTask;
+        var run = _activeRunTask;
+        if (run is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await run.WaitAsync(TimeSpan.FromSeconds(8)).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            _logger?.LogWarning("Timed out waiting for the active scheduled run to finish after cancel");
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Active scheduled run ended with an error after cancel");
+        }
     }
 
     private async Task PollLoopAsync(CancellationToken cancellationToken)
@@ -334,28 +355,19 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
             _activeRunCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             previousCts?.Dispose();
 
+            var runTask = ExecuteWithExecutorAsync(executor, plan, _activeRunCts.Token);
+            _activeRunTask = runTask;
             ScheduledScanRunResult result;
             try
             {
-                result = await executor.ExecuteAsync(plan, _activeRunCts.Token).ConfigureAwait(false);
+                result = await runTask.ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            finally
             {
-                result = new ScheduledScanRunResult
+                if (ReferenceEquals(_activeRunTask, runTask))
                 {
-                    PlanId = plan.Id,
-                    Outcome = ScheduledScanRunOutcome.Cancelled
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Scheduled scan {PlanId} failed", plan.Id);
-                result = new ScheduledScanRunResult
-                {
-                    PlanId = plan.Id,
-                    Outcome = ScheduledScanRunOutcome.Failed,
-                    ErrorMessage = ex.Message
-                };
+                    _activeRunTask = null;
+                }
             }
 
             await ApplyRunResultAsync(plan.Id, result, cancellationToken).ConfigureAwait(false);
@@ -364,6 +376,35 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
         finally
         {
             _runGate.Release();
+        }
+    }
+
+    private async Task<ScheduledScanRunResult> ExecuteWithExecutorAsync(
+        IScheduledScanExecutor executor,
+        ScheduledScanDefinition plan,
+        CancellationToken token)
+    {
+        try
+        {
+            return await executor.ExecuteAsync(plan, token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.Cancelled
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Scheduled scan {PlanId} failed", plan.Id);
+            return new ScheduledScanRunResult
+            {
+                PlanId = plan.Id,
+                Outcome = ScheduledScanRunOutcome.Failed,
+                ErrorMessage = ex.Message
+            };
         }
     }
 
@@ -460,17 +501,22 @@ public sealed class ScheduledScanService : IScheduledScanService, IDisposable
 
     private async Task PersistAsync(CancellationToken cancellationToken)
     {
-        var version = Interlocked.Increment(ref _persistVersion);
-        List<ScheduledScanDefinition> snapshot;
-        lock (_sync)
+        // Re-save until this writer is the latest so overlapping Update/ApplyResult
+        // cannot leave a stale snapshot on disk.
+        while (true)
         {
-            snapshot = _plans.Select(Clone).ToList();
-        }
+            var version = Interlocked.Increment(ref _persistVersion);
+            List<ScheduledScanDefinition> snapshot;
+            lock (_sync)
+            {
+                snapshot = _plans.Select(Clone).ToList();
+            }
 
-        await _store.SaveAsync(snapshot, cancellationToken).ConfigureAwait(false);
-        if (version != _persistVersion)
-        {
-            // A newer save supersedes; ignore.
+            await _store.SaveAsync(snapshot, cancellationToken).ConfigureAwait(false);
+            if (version == Volatile.Read(ref _persistVersion))
+            {
+                return;
+            }
         }
     }
 

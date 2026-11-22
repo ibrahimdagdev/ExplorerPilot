@@ -305,10 +305,17 @@ public partial class App : Application
         {
             try
             {
-                _services.GetService<Core.Interfaces.IScheduledScanService>()
-                    ?.StopAsync()
-                    .GetAwaiter()
-                    .GetResult();
+                // Run stop off the UI thread so a cancelled scheduled scan whose
+                // continuations need the dispatcher cannot deadlock OnExit.
+                var scheduler = _services.GetService<Core.Interfaces.IScheduledScanService>();
+                if (scheduler is not null)
+                {
+                    var stop = Task.Run(() => scheduler.StopAsync());
+                    if (!stop.Wait(TimeSpan.FromSeconds(10)))
+                    {
+                        _logger?.LogWarning("Scheduled scan service stop timed out during exit");
+                    }
+                }
             }
             catch
             {
