@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using ExplorerPilot.App.Converters;
 using ExplorerPilot.App.Localization;
 using ExplorerPilot.App.Services;
+using ExplorerPilot.App.Settings;
 using ExplorerPilot.App.Theming;
 using ExplorerPilot.Core.Diagnostics;
 using ExplorerPilot.Core.Enums;
@@ -30,6 +31,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     private readonly ISnapshotStore _snapshotStore;
     private readonly IThemeService _themeService;
     private readonly ILocalizationService _localization;
+    private readonly UserSettingsStore _settingsStore;
     private readonly IAboutDialogService _aboutDialog;
     private readonly ISystemInformationDialogService _systemInformationDialog;
     private readonly IFileActionService _fileActions;
@@ -77,12 +79,14 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         ScheduledScansViewModel scheduledScansUi,
         IScheduledScanService scheduledScans,
         ISnapshotStore snapshotStore,
+        UserSettingsStore settingsStore,
         ILogger<MainViewModel> logger)
     {
         _diskScanner = diskScanner;
         _driveDiscovery = driveDiscovery;
         _scheduledScans = scheduledScans;
         _snapshotStore = snapshotStore;
+        _settingsStore = settingsStore;
         _themeService = themeService;
         _localization = localization;
         _aboutDialog = aboutDialog;
@@ -118,6 +122,10 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
         SelectedLargestFilesLimit = LargestFilesLimitOptions.First(o => o.Limit == LargestFilesOptions.DefaultDisplayLimit);
 
+        BuildSidebarNavigation();
+        _isSidebarExpanded = _settingsStore.Load().SidebarExpanded;
+        SidebarWidth = _isSidebarExpanded ? ExpandedSidebarWidth : CollapsedSidebarWidth;
+
         _localization.LanguageChanged += OnLanguageChanged;
         Treemap.NodeSelected += OnTreemapNodeSelected;
         Dashboard.NavigateToTabRequested += OnDashboardNavigateToTab;
@@ -125,11 +133,29 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         Dashboard.ScanRootRequested += OnDashboardScanRoot;
         RefreshLocalizedChrome();
         ApplyStatus(_statusKind);
-        Dashboard.SetVisible(SelectedMainTabIndex == 0);
+        SelectedMainTabIndex = 0;
+        SyncSidebarSelection(0);
+        Dashboard.SetVisible(true);
     }
 
-    partial void OnSelectedMainTabIndexChanged(int value) =>
+    partial void OnSelectedMainTabIndexChanged(int value)
+    {
         Dashboard.SetVisible(value == 0);
+        SyncSidebarSelection(value);
+    }
+
+    partial void OnIsSidebarExpandedChanged(bool value)
+    {
+        SidebarWidth = value ? ExpandedSidebarWidth : CollapsedSidebarWidth;
+        try
+        {
+            _settingsStore.Update(s => s.SidebarExpanded = value);
+        }
+        catch
+        {
+            // preference persistence is best-effort
+        }
+    }
 
     /// <summary>Currently selected Directory Explorer node (shared with Treemap).</summary>
     public TreeNodeViewModel? SelectedExplorerNode
@@ -314,9 +340,26 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     [ObservableProperty]
     private TreeNodeViewModel? _rootNode;
 
-    /// <summary>0 = Drives overview; 1+ = existing analysis tabs.</summary>
+    /// <summary>Workspace page index (0 Dashboard … 11 Scheduled) — kept in sync with TabControl.</summary>
     [ObservableProperty]
     private int _selectedMainTabIndex;
+
+    [ObservableProperty]
+    private bool _isSidebarExpanded = true;
+
+    [ObservableProperty]
+    private double _sidebarWidth = ExpandedSidebarWidth;
+
+    [ObservableProperty]
+    private SidebarNavItemViewModel? _selectedNavItem;
+
+    public const double ExpandedSidebarWidth = 232;
+    public const double CollapsedSidebarWidth = 64;
+
+    public ObservableCollection<SidebarNavSectionViewModel> NavigationSections { get; } = [];
+
+    public IEnumerable<SidebarNavItemViewModel> AllNavItems =>
+        NavigationSections.SelectMany(s => s.Items);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
@@ -1532,6 +1575,89 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         ScheduledScans.RefreshLocalization();
     }
 
+    private void BuildSidebarNavigation()
+    {
+        NavigationSections.Clear();
+        NavigationSections.Add(new SidebarNavSectionViewModel("Nav_Section_Overview",
+        [
+            new SidebarNavItemViewModel(0, "Dashboard_Title", SidebarNavIcons.Dashboard),
+            new SidebarNavItemViewModel(1, "Drives_Title", SidebarNavIcons.Drives)
+        ]));
+        NavigationSections.Add(new SidebarNavSectionViewModel("Nav_Section_DiskAnalysis",
+        [
+            new SidebarNavItemViewModel(2, "Explorer_Title", SidebarNavIcons.Explorer),
+            new SidebarNavItemViewModel(3, "LargestFiles_Title", SidebarNavIcons.LargestFiles),
+            new SidebarNavItemViewModel(4, "FileTypes_Title", SidebarNavIcons.FileTypes),
+            new SidebarNavItemViewModel(5, "Search_Title", SidebarNavIcons.Search),
+            new SidebarNavItemViewModel(6, "Duplicates_Title", SidebarNavIcons.Duplicates),
+            new SidebarNavItemViewModel(7, "Treemap_Title", SidebarNavIcons.Treemap)
+        ]));
+        NavigationSections.Add(new SidebarNavSectionViewModel("Nav_Section_Monitoring",
+        [
+            new SidebarNavItemViewModel(8, "Comparison_Title", SidebarNavIcons.Comparison),
+            new SidebarNavItemViewModel(10, "Trends_Title", SidebarNavIcons.Trends),
+            new SidebarNavItemViewModel(11, "Scheduled_Title", SidebarNavIcons.Scheduled)
+        ]));
+        NavigationSections.Add(new SidebarNavSectionViewModel("Nav_Section_Tools",
+        [
+            new SidebarNavItemViewModel(9, "Cleanup_Title", SidebarNavIcons.Cleanup)
+        ]));
+    }
+
+    private void SyncSidebarSelection(int pageIndex)
+    {
+        SidebarNavItemViewModel? match = null;
+        foreach (var item in AllNavItems)
+        {
+            var selected = item.PageIndex == pageIndex;
+            item.IsSelected = selected;
+            if (selected)
+            {
+                match = item;
+            }
+        }
+
+        if (!ReferenceEquals(SelectedNavItem, match))
+        {
+            _suppressNavSelectionWrite = true;
+            try
+            {
+                SelectedNavItem = match;
+            }
+            finally
+            {
+                _suppressNavSelectionWrite = false;
+            }
+        }
+    }
+
+    partial void OnSelectedNavItemChanged(SidebarNavItemViewModel? value)
+    {
+        if (_suppressNavSelectionWrite || value is null)
+        {
+            return;
+        }
+
+        if (SelectedMainTabIndex != value.PageIndex)
+        {
+            SelectedMainTabIndex = value.PageIndex;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSidebar() => IsSidebarExpanded = !IsSidebarExpanded;
+
+    [RelayCommand]
+    private void NavigateToPage(int pageIndex)
+    {
+        if (pageIndex is >= 0 and <= 11)
+        {
+            SelectedMainTabIndex = pageIndex;
+        }
+    }
+
+    private bool _suppressNavSelectionWrite;
+
     private void RefreshLocalizedChrome()
     {
         // Updating DisplayName can make WPF ComboBoxes re-evaluate SelectedItem and fire
@@ -1557,6 +1683,15 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         {
             _suppressThemePreferenceWrite = false;
             _suppressLanguagePreferenceWrite = false;
+        }
+
+        foreach (var section in NavigationSections)
+        {
+            section.Title = _localization.GetString(section.TitleKey);
+            foreach (var item in section.Items)
+            {
+                item.Title = _localization.GetString(item.TitleKey);
+            }
         }
 
         foreach (var option in LargestFilesLimitOptions)

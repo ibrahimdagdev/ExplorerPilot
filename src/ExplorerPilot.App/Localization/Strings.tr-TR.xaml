@@ -4,6 +4,13 @@
 
     <sys:String x:Key="App_Name">ExplorerPilot</sys:String>
     <sys:String x:Key="App_Subtitle">Depolama alanınızı keşfedin. Kontrolü elinize alın.</sys:String>
+    <sys:String x:Key="Nav_Section_Overview">Genel Bakış</sys:String>
+    <sys:String x:Key="Nav_Section_DiskAnalysis">Disk Analizi</sys:String>
+    <sys:String x:Key="Nav_Section_Monitoring">İzleme</sys:String>
+    <sys:String x:Key="Nav_Section_Tools">Araçlar</sys:String>
+    <sys:String x:Key="Nav_Collapse">Kenar çubuğunu daralt</sys:String>
+    <sys:String x:Key="Nav_Expand">Kenar çubuğunu genişlet</sys:String>
+    <sys:String x:Key="Nav_Sidebar">Gezinme</sys:String>
     <sys:String x:Key="About_Title">Hakkında</sys:String>
     <sys:String x:Key="About_Description">Windows için modern bir disk alanı analiz uygulaması.</sys:String>
     <sys:String x:Key="About_Version">Sürüm</sys:String>

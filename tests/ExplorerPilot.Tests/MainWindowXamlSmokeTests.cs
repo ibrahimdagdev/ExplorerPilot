@@ -48,7 +48,11 @@ public sealed class MainWindowXamlSmokeTests
                 window.Show();
                 window.UpdateLayout();
 
-                // Force tab content materialization where DataGrid headers live.
+                // Sidebar + headerless TabControl host (12 pages).
+                Assert.Equal(12, viewModel.AllNavItems.Count());
+                Assert.Equal(0, viewModel.SelectedMainTabIndex);
+                Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == 0 && n.IsSelected);
+
                 if (FindTabControl(window) is { } tabs)
                 {
                     Assert.True(tabs.Items.Count >= 12,
@@ -61,20 +65,23 @@ public sealed class MainWindowXamlSmokeTests
                         Assert.False(string.IsNullOrWhiteSpace(headerText),
                             $"Tab {i} Header must resolve to a non-empty localized string.");
 
-                        tabs.SelectedIndex = i;
+                        viewModel.SelectedMainTabIndex = i;
                         window.UpdateLayout();
-
-                        // ContentSource="Header" must paint readable text in the header chrome.
-                        var headerPresenter = FindHeaderContentPresenter(tab);
-                        Assert.NotNull(headerPresenter);
-                        Assert.True(headerPresenter!.ActualWidth > 0 && headerPresenter.ActualHeight > 0,
-                            $"Tab '{headerText}' header presenter has no visible layout.");
+                        Assert.Equal(i, tabs.SelectedIndex);
+                        Assert.NotNull(tab.Content);
                     }
                 }
                 else
                 {
                     Assert.Fail("Workspace TabControl was not found.");
                 }
+
+                viewModel.IsSidebarExpanded = false;
+                window.UpdateLayout();
+                Assert.Equal(MainViewModel.CollapsedSidebarWidth, viewModel.SidebarWidth);
+                viewModel.IsSidebarExpanded = true;
+                window.UpdateLayout();
+                Assert.Equal(MainViewModel.ExpandedSidebarWidth, viewModel.SidebarWidth);
 
                 window.Close();
             }

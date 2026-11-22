@@ -4,6 +4,13 @@
 
     <sys:String x:Key="App_Name">ExplorerPilot</sys:String>
     <sys:String x:Key="App_Subtitle">Explore your storage. Take control.</sys:String>
+    <sys:String x:Key="Nav_Section_Overview">Overview</sys:String>
+    <sys:String x:Key="Nav_Section_DiskAnalysis">Disk Analysis</sys:String>
+    <sys:String x:Key="Nav_Section_Monitoring">Monitoring</sys:String>
+    <sys:String x:Key="Nav_Section_Tools">Tools</sys:String>
+    <sys:String x:Key="Nav_Collapse">Collapse sidebar</sys:String>
+    <sys:String x:Key="Nav_Expand">Expand sidebar</sys:String>
+    <sys:String x:Key="Nav_Sidebar">Navigation</sys:String>
     <sys:String x:Key="About_Title">About</sys:String>
     <sys:String x:Key="About_Description">A modern disk space analyzer for Windows.</sys:String>
     <sys:String x:Key="About_Version">Version</sys:String>

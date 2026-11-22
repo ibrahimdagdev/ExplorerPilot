@@ -564,7 +564,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Workspace tabs -->
+    <!-- Workspace host: TabControl keeps page visual trees alive; headers live in the sidebar. -->
     <Style x:Key="WorkspaceTabControlStyle" TargetType="TabControl">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -574,21 +574,80 @@
                 <ControlTemplate TargetType="TabControl">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="0" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TabPanel Grid.Row="0"
                                   IsItemsHost="True"
-                                  Margin="12,10,12,0"
+                                  Height="0"
+                                  Width="0"
+                                  Opacity="0"
+                                  IsHitTestVisible="False"
+                                  KeyboardNavigation.TabNavigation="None"
                                   Background="Transparent" />
-                        <Border Grid.Row="1"
-                                Background="Transparent"
-                                BorderBrush="{DynamicResource BorderBrushKey}"
-                                BorderThickness="0,1,0,0"
-                                Margin="0,8,0,0">
+                        <Border Grid.Row="1" Background="Transparent">
                             <ContentPresenter ContentSource="SelectedContent" />
                         </Border>
                     </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SidebarPanelStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Padding" Value="10,12" />
+        <Setter Property="MinWidth" Value="64" />
+    </Style>
+
+    <Style x:Key="SidebarSectionTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource MetricLabelStyle}">
+        <Setter Property="Margin" Value="10,10,10,6" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <Style x:Key="SidebarNavButtonStyle" TargetType="RadioButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="KeyboardNavigation.AcceptsReturn" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BgControlBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource FocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
