@@ -11,12 +11,14 @@ public sealed class SidebarNavigationTests
         Assert.False(SidebarNavIcons.Dashboard.IsEmpty());
         Assert.False(SidebarNavIcons.Search.IsEmpty());
         Assert.False(SidebarNavIcons.Cleanup.IsEmpty());
-        Assert.Equal(12, new[]
+        Assert.False(SidebarNavIcons.Settings.IsEmpty());
+        Assert.Equal(13, new[]
         {
             SidebarNavIcons.Dashboard, SidebarNavIcons.Drives, SidebarNavIcons.Explorer,
             SidebarNavIcons.LargestFiles, SidebarNavIcons.FileTypes, SidebarNavIcons.Search,
             SidebarNavIcons.Duplicates, SidebarNavIcons.Treemap, SidebarNavIcons.Comparison,
-            SidebarNavIcons.Trends, SidebarNavIcons.Scheduled, SidebarNavIcons.Cleanup
+            SidebarNavIcons.Trends, SidebarNavIcons.Scheduled, SidebarNavIcons.Cleanup,
+            SidebarNavIcons.Settings
         }.Length);
     }
 

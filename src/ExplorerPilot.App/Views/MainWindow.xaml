@@ -33,146 +33,113 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header toolbar (horizontal scroll only when content overflows) -->
+        <!--
+          Toolbar: no ScrollViewer.
+          Root cause of the old horizontal scrollbar: inner Grid MinWidth (900) exceeded the
+          usable window width (MinWidth 900 minus margins) while theme/language ComboBoxes
+          added fixed MinWidths — ScrollViewer Auto then always reserved a bar.
+          Theme/language moved to Settings; remaining controls use star sizing + wrap.
+        -->
         <Border Grid.Row="0" Style="{StaticResource ToolbarStyle}">
-            <ScrollViewer Style="{StaticResource ToolbarScrollViewerStyle}"
-                          Focusable="False"
-                          CanContentScroll="False">
-            <Grid MinWidth="900">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" MinWidth="160" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="28"
-                            Height="28"
-                            CornerRadius="8"
-                            Background="{DynamicResource AccentBrush}"
-                            VerticalAlignment="Center"
-                            Margin="0,0,10,0">
-                        <Viewbox Width="14" Height="14" Stretch="Uniform">
-                            <Path Fill="{DynamicResource AccentForegroundBrush}"
-                                  Data="M2,2 H10 V6 H14 V14 H2 Z M4,4 V12 H12 V8 H8 V4 Z" />
-                        </Viewbox>
-                    </Border>
-                    <TextBlock Text="{DynamicResource App_Name}" Style="{StaticResource BrandTitleStyle}" />
-                </StackPanel>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" MinWidth="120" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="2" VerticalAlignment="Center">
-                    <ComboBox ItemsSource="{Binding AvailableDrives}"
-                              SelectedItem="{Binding SelectedDrive, Mode=TwoWay}"
-                              ToolTip="{Binding SelectedDrive, Converter={StaticResource DriveDisplayConverter}}">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsScanning}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsDiscoveringDrives}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False" />
-                                        <Setter Property="Opacity" Value="0.55" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource DriveDisplayConverter}}"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           TextTrimming="CharacterEllipsis" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <TextBlock Text="{Binding DriveSelectorStatus}"
-                               IsHitTestVisible="False"
-                               VerticalAlignment="Center"
-                               Margin="12,0,40,0"
-                               Style="{StaticResource MutedTextStyle}"
-                               Visibility="{Binding IsDiscoveringDrives, Converter={StaticResource BoolToVis}}" />
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="28"
+                                Height="28"
+                                CornerRadius="8"
+                                Background="{DynamicResource AccentBrush}"
+                                VerticalAlignment="Center"
+                                Margin="0,0,10,0">
+                            <Viewbox Width="14" Height="14" Stretch="Uniform">
+                                <Path Fill="{DynamicResource AccentForegroundBrush}"
+                                      Data="M2,2 H10 V6 H14 V14 H2 Z M4,4 V12 H12 V8 H8 V4 Z" />
+                            </Viewbox>
+                        </Border>
+                        <TextBlock Text="{DynamicResource App_Name}" Style="{StaticResource BrandTitleStyle}" />
+                    </StackPanel>
+
+                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                        <ComboBox ItemsSource="{Binding AvailableDrives}"
+                                  SelectedItem="{Binding SelectedDrive, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch"
+                                  ToolTip="{Binding SelectedDrive, Converter={StaticResource DriveDisplayConverter}}">
+                            <ComboBox.Style>
+                                <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsScanning}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsDiscoveringDrives}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                            <Setter Property="Opacity" Value="0.55" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ComboBox.Style>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource DriveDisplayConverter}}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding DriveSelectorStatus}"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,40,0"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Visibility="{Binding IsDiscoveringDrives, Converter={StaticResource BoolToVis}}" />
+                    </Grid>
+
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="{DynamicResource Button_BrowseFolder}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding BrowseFolderCommand}"
+                                Margin="0,0,8,0" />
+                        <Button Content="{DynamicResource Button_ExportReport}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding ExportReportCommand}"
+                                ToolTip="{DynamicResource Report_ButtonTooltip}" />
+                    </StackPanel>
                 </Grid>
 
-                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="{DynamicResource Button_BrowseFolder}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding BrowseFolderCommand}"
-                            Margin="0,0,8,0" />
-                    <Button Content="{DynamicResource Button_ExportReport}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding ExportReportCommand}"
-                            ToolTip="{DynamicResource Report_ButtonTooltip}" />
-                </StackPanel>
-
-                <ComboBox Grid.Column="6"
-                          Style="{StaticResource ThemeSelectorComboBoxStyle}"
-                          ItemsSource="{Binding ThemeOptions}"
-                          SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
-                          SelectedValuePath="Mode"
-                          DisplayMemberPath="DisplayName"
-                          ToolTip="{DynamicResource Theme_SelectorTooltip}"
-                          VerticalAlignment="Center" />
-
-                <ComboBox Grid.Column="8"
-                          Style="{StaticResource ThemeSelectorComboBoxStyle}"
-                          ItemsSource="{Binding LanguageOptions}"
-                          SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
-                          DisplayMemberPath="DisplayName"
-                          ToolTip="{DynamicResource Language_SelectorTooltip}"
-                          VerticalAlignment="Center" />
-
-                <Button Grid.Column="10"
-                        Style="{StaticResource IconButtonStyle}"
-                        Command="{Binding ShowSystemInformationCommand}"
-                        ToolTip="{DynamicResource SystemInfo_ButtonTooltip}"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="{DynamicResource SystemInfo_Title}">
-                    <Viewbox Width="16" Height="16" Stretch="Uniform">
-                        <Path Fill="{DynamicResource TextPrimaryBrush}"
-                              Data="M2,3 H14 V13 H2 Z M4,5 V11 H12 V5 Z M5.5,6.5 H7 V8 H5.5 Z M8.5,6.5 H10.5 V7.5 H8.5 Z M5.5,9 H10.5 V10 H5.5 Z" />
-                    </Viewbox>
-                </Button>
-
-                <Button Grid.Column="12"
-                        Style="{StaticResource IconButtonStyle}"
-                        Command="{Binding ShowAboutCommand}"
-                        ToolTip="{DynamicResource About_ButtonTooltip}"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="{DynamicResource About_Title}">
-                    <Viewbox Width="16" Height="16" Stretch="Uniform">
-                        <Path Fill="{DynamicResource TextPrimaryBrush}"
-                              Data="M8,1.5 A6.5,6.5 0 1 0 8,14.5 A6.5,6.5 0 1 0 8,1.5 Z M7.25,4.25 H8.75 V5.75 H7.25 Z M7.25,7 H8.75 V12 H7.25 Z" />
-                    </Viewbox>
-                </Button>
-
-                <StackPanel Grid.Column="14" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="{DynamicResource Button_StartScan}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ScanCommand}"
-                            Margin="0,0,8,0" />
-                    <Button Content="{DynamicResource Button_CancelScan}"
-                            Style="{StaticResource DangerButtonStyle}"
-                            Command="{Binding CancelScanCommand}"
-                            Margin="0,0,8,0" />
-                    <Button Content="{DynamicResource Button_CancelExport}"
-                            Style="{StaticResource DangerButtonStyle}"
-                            Command="{Binding CancelExportCommand}"
-                            Visibility="{Binding IsExporting, Converter={StaticResource BoolToVis}}" />
-                </StackPanel>
+                <DockPanel Grid.Row="1" Margin="0,10,0,0" LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="{DynamicResource Button_StartScan}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding ScanCommand}"
+                                Margin="0,0,8,0" />
+                        <Button Content="{DynamicResource Button_CancelScan}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Command="{Binding CancelScanCommand}"
+                                Margin="0,0,8,0" />
+                        <Button Content="{DynamicResource Button_CancelExport}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Command="{Binding CancelExportCommand}"
+                                Visibility="{Binding IsExporting, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding TargetPathText}"
+                               Style="{StaticResource MutedTextStyle}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,0,12,0"
+                               ToolTip="{Binding TargetPathText}" />
+                </DockPanel>
             </Grid>
-            </ScrollViewer>
         </Border>
 
         <!-- Storage summary -->
@@ -249,7 +216,7 @@
                 <DockPanel>
                     <Button DockPanel.Dock="Bottom"
                             Command="{Binding ToggleSidebarCommand}"
-                            Margin="0,10,0,0"
+                            Margin="0,8,0,0"
                             MinHeight="34"
                             HorizontalContentAlignment="Center"
                             AutomationProperties.Name="{DynamicResource Nav_Sidebar}">
@@ -282,6 +249,46 @@
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}" />
                         </StackPanel>
                     </Button>
+
+                    <!-- Settings pinned above collapse (13th nav target). -->
+                    <RadioButton DockPanel.Dock="Bottom"
+                                 DataContext="{Binding SettingsNavItem}"
+                                 GroupName="ExplorerPilotSidebarNav"
+                                 Style="{StaticResource SidebarNavButtonStyle}"
+                                 IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                 Command="{Binding DataContext.NavigateToPageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 CommandParameter="{Binding PageIndex}"
+                                 ToolTip="{Binding Title}"
+                                 Margin="0,8,0,0"
+                                 AutomationProperties.Name="{Binding Title}"
+                                 AutomationProperties.ItemStatus="{Binding IsSelected}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox Width="16" Height="16" Stretch="Uniform">
+                                <Viewbox.Style>
+                                    <Style TargetType="Viewbox">
+                                        <Setter Property="Margin" Value="0,0,10,0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                                <Setter Property="Margin" Value="0" />
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Viewbox.Style>
+                                <Path Data="{Binding Icon}"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                      StrokeThickness="1.75"
+                                      Fill="Transparent"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" />
+                            </Viewbox>
+                            <TextBlock Text="{Binding Title}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </RadioButton>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
@@ -2964,6 +2971,90 @@
                                 </Border>
                             </Grid>
                         </Grid>
+                    </TabItem>
+
+                    <TabItem Header="{DynamicResource Settings_Title}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="16">
+                            <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                                <TextBlock Text="{DynamicResource Settings_Title}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,4" />
+                                <TextBlock Text="{DynamicResource Settings_Subtitle}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,16" TextWrapping="Wrap" />
+
+                                <Border Style="{StaticResource SummaryCardStyle}" Padding="16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource Settings_Appearance}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,4" />
+                                        <TextBlock Text="{DynamicResource Settings_AppearanceHint}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,12" TextWrapping="Wrap" />
+
+                                        <TextBlock Text="{DynamicResource Settings_Theme}" Style="{StaticResource MetricLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding SettingsThemeOptions}"
+                                                  SelectedItem="{Binding SelectedSettingsTheme, Mode=TwoWay}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  Margin="0,4,0,6"
+                                                  MinHeight="36"
+                                                  MaxWidth="280"
+                                                  HorizontalAlignment="Left" />
+                                        <DockPanel Margin="0,0,0,14">
+                                            <TextBlock Text="{DynamicResource Settings_CurrentTheme}" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" />
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Text="{Binding SelectedSettingsTheme.DisplayName}"
+                                                       Style="{StaticResource BodyTextStyle}"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Right" />
+                                        </DockPanel>
+
+                                        <TextBlock Text="{DynamicResource Settings_Language}" Style="{StaticResource MetricLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding SettingsLanguageOptions}"
+                                                  SelectedItem="{Binding SelectedSettingsLanguage, Mode=TwoWay}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  Margin="0,4,0,6"
+                                                  MinHeight="36"
+                                                  MaxWidth="280"
+                                                  HorizontalAlignment="Left" />
+                                        <DockPanel>
+                                            <TextBlock Text="{DynamicResource Settings_CurrentLanguage}" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" />
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Text="{Binding SelectedSettingsLanguage.DisplayName}"
+                                                       Style="{StaticResource BodyTextStyle}"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Right" />
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource SummaryCardStyle}" Padding="16">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource Settings_Application}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12" />
+
+                                        <TextBlock Text="{DynamicResource Settings_AppName}" Style="{StaticResource MetricLabelStyle}" />
+                                        <TextBlock Text="{Binding AppInfo.ProductName}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,10" />
+
+                                        <TextBlock Text="{DynamicResource Settings_Version}" Style="{StaticResource MetricLabelStyle}" />
+                                        <TextBlock Text="{Binding AppInfo.BrandedVersionLabel}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,10" />
+
+                                        <TextBlock Text="{DynamicResource Settings_Description}" Style="{StaticResource MetricLabelStyle}" />
+                                        <TextBlock Text="{DynamicResource About_Description}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+                                        <TextBlock Text="{DynamicResource Settings_Repository}" Style="{StaticResource MetricLabelStyle}" />
+                                        <TextBlock Text="{Binding AppInfo.RepositoryDisplay}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,8" />
+                                        <WrapPanel>
+                                            <Button Content="{DynamicResource Settings_OpenRepository}"
+                                                    Style="{StaticResource PrimaryButtonStyle}"
+                                                    Command="{Binding OpenRepositoryCommand}"
+                                                    Margin="0,0,8,8" />
+                                            <Button Content="{DynamicResource About_Title}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding ShowAboutCommand}"
+                                                    Margin="0,0,8,8" />
+                                            <Button Content="{DynamicResource SystemInfo_Title}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding ShowSystemInformationCommand}"
+                                                    Margin="0,0,8,8" />
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
                     </TabItem>
                 </TabControl>
             </Border>

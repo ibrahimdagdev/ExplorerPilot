@@ -540,46 +540,12 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <!-- Toolbar: Auto horizontal scroll only when content overflows; no idle scrollbar chrome. -->
-    <Style x:Key="ToolbarScrollViewerStyle" TargetType="ScrollViewer" BasedOn="{StaticResource {x:Type ScrollViewer}}">
-        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
-        <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollViewer">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                Grid.Row="0"
-                                                Margin="{TemplateBinding Padding}"
-                                                CanContentScroll="{TemplateBinding CanContentScroll}" />
-                        <ScrollBar x:Name="PART_HorizontalScrollBar"
-                                   Grid.Row="1"
-                                   Orientation="Horizontal"
-                                   Height="6"
-                                   MinHeight="6"
-                                   Maximum="{TemplateBinding ScrollableWidth}"
-                                   ViewportSize="{TemplateBinding ViewportWidth}"
-                                   Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- Compact theme selector -->
+    <!-- Compact selector used by analysis filter ComboBoxes (not the main toolbar). -->
     <Style x:Key="ThemeSelectorComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-        <Setter Property="MinWidth" Value="108" />
-        <Setter Property="MaxWidth" Value="128" />
+        <Setter Property="MinWidth" Value="96" />
+        <Setter Property="MaxWidth" Value="160" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Padding" Value="10,0,32,0" />
-        <Setter Property="ToolTip" Value="Application theme" />
     </Style>
 
     <!-- ScrollBar (theme-aware) -->

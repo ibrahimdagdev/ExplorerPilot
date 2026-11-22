@@ -9,7 +9,7 @@ namespace ExplorerPilot.Tests;
 public sealed class SidebarStabilizationTests
 {
     [Fact]
-    public void NavigationTargets_CoverTwelveDistinctPageIndices()
+    public void NavigationTargets_CoverTwelveAnalysisPagesPlusSettings()
     {
         var expected = Enumerable.Range(0, 12).ToArray();
         var sections = BuildCanonicalSections();
@@ -22,6 +22,8 @@ public sealed class SidebarStabilizationTests
         Assert.Equal(3, sections[2].Items.Count); // Monitoring
         Assert.Single(sections[3].Items); // Tools (Cleanup)
         Assert.Equal(9, sections[3].Items[0].PageIndex);
+        Assert.Equal(12, MainViewModel.SettingsTabIndex);
+        Assert.False(SidebarNavIcons.Settings.IsEmpty());
     }
 
     [Fact]

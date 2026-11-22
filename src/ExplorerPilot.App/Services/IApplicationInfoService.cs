@@ -14,6 +14,10 @@ public interface IApplicationInfoService
 
     string WebsiteDisplay { get; }
 
+    string RepositoryUrl { get; }
+
+    string RepositoryDisplay { get; }
+
     string Platform { get; }
 
     /// <summary>Semantic version without prefix, e.g. 0.1.0</summary>

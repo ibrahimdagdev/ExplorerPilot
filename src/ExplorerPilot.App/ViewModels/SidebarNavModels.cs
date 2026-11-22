@@ -60,6 +60,7 @@ public static class SidebarNavIcons
     public static Geometry Trends { get; } = Freeze("M3,17 L9,11 L13,15 L21,7 M15,7 H21 V13");
     public static Geometry Scheduled { get; } = Freeze("M6,4 V6 M18,4 V6 M4,8 H20 M5,5 H19 V20 H5 Z M9,12 H10 M14,12 H15 M9,16 H10");
     public static Geometry Cleanup { get; } = Freeze("M5,8 H19 M9,8 V5 H15 V8 M7,8 V19 H17 V8 M10,12 V16 M14,12 V16");
+    public static Geometry Settings { get; } = Freeze("M12,8 A4,4 0 1 0 12,16 A4,4 0 1 0 12,8 Z M4.5,10.5 H7.2 L8,8.5 L6.8,6.5 L8.5,5.5 L10.5,7.2 L12,6.5 V4 H14 V6.5 L15.5,7.2 L17.5,5.5 L19.2,6.5 L18,8.5 L19.5,10.5 H22 V13.5 H19.5 L18,15.5 L19.2,17.5 L17.5,18.5 L15.5,16.8 L14,17.5 V20 H12 V17.5 L10.5,16.8 L8.5,18.5 L6.8,17.5 L8,15.5 L7.2,13.5 H4.5 Z");
 
     private static Geometry Freeze(string data)
     {

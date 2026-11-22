@@ -20,6 +20,8 @@ public sealed class ApplicationInfoService : IApplicationInfoService
 
         WebsiteUrl = "https://tasarisoft.com";
         WebsiteDisplay = "tasarisoft.com";
+        RepositoryUrl = "https://github.com/ibrahimdagdev/ExplorerPilot";
+        RepositoryDisplay = "github.com/ibrahimdagdev/ExplorerPilot";
         Platform = "Windows / .NET 10";
 
         Version = ResolveVersion(assembly);
@@ -42,6 +44,10 @@ public sealed class ApplicationInfoService : IApplicationInfoService
     public string WebsiteUrl { get; }
 
     public string WebsiteDisplay { get; }
+
+    public string RepositoryUrl { get; }
+
+    public string RepositoryDisplay { get; }
 
     public string Platform { get; }
 

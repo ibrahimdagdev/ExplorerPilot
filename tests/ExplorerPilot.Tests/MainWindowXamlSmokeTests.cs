@@ -48,16 +48,17 @@ public sealed class MainWindowXamlSmokeTests
                 window.Show();
                 window.UpdateLayout();
 
-                // Sidebar + headerless TabControl host (12 pages).
-                Assert.Equal(12, viewModel.AllNavItems.Count());
+                // Sidebar + headerless TabControl host (12 analysis pages + Settings).
+                Assert.Equal(13, viewModel.AllNavItems.Count());
                 Assert.Equal(0, viewModel.SelectedMainTabIndex);
                 Assert.Contains(viewModel.AllNavItems, n => n.PageIndex == 0 && n.IsSelected);
+                Assert.Equal(MainViewModel.SettingsTabIndex, viewModel.SettingsNavItem.PageIndex);
                 Assert.True(viewModel.IsSidebarExpanded);
 
                 if (FindTabControl(window) is { } tabs)
                 {
-                    Assert.True(tabs.Items.Count >= 12,
-                        "Expected Dashboard, Drives, nine analysis tabs, and Scheduled Scans.");
+                    Assert.True(tabs.Items.Count >= 13,
+                        "Expected 12 analysis tabs plus Settings.");
 
                     for (var i = 0; i < tabs.Items.Count; i++)
                     {
@@ -78,6 +79,16 @@ public sealed class MainWindowXamlSmokeTests
                 {
                     Assert.Fail("Workspace TabControl was not found.");
                 }
+
+                // Settings selectors persist theme/language without changing the selected page mid-flight incorrectly.
+                viewModel.NavigateToPageCommand.Execute(MainViewModel.SettingsTabIndex);
+                window.UpdateLayout();
+                Assert.Equal(MainViewModel.SettingsTabIndex, viewModel.SelectedMainTabIndex);
+                Assert.True(viewModel.SettingsNavItem.IsSelected);
+                Assert.Contains(viewModel.SettingsThemeOptions, t => t.Mode == AppThemeMode.Light);
+                Assert.Contains(viewModel.SettingsThemeOptions, t => t.Mode == AppThemeMode.Dark);
+                Assert.DoesNotContain(viewModel.SettingsThemeOptions, t => t.Mode == AppThemeMode.System);
+                Assert.Equal(2, viewModel.SettingsLanguageOptions.Count);
 
                 // Dashboard shortcut commands keep SelectedMainTabIndex + sidebar selection in sync.
                 viewModel.NavigateToPageCommand.Execute(0);
@@ -128,7 +139,7 @@ public sealed class MainWindowXamlSmokeTests
                 Assert.Equal(MainViewModel.ExpandedSidebarWidth, viewModel.SidebarWidth);
                 Assert.True(settingsStore.Load().SidebarExpanded);
 
-                // Responsive workspace sizes used in beta acceptance (layout, not pixel screenshots).
+                // Responsive workspace sizes: no toolbar ScrollViewer / horizontal overflow chrome.
                 foreach (var (width, height) in new[] { (1280, 720), (1366, 768), (1920, 1080) })
                 {
                     window.Width = width;
@@ -137,6 +148,8 @@ public sealed class MainWindowXamlSmokeTests
                     Assert.True(window.ActualWidth > 0);
                     Assert.True(window.ActualHeight > 0);
                     Assert.Equal(pageBeforeTheme, viewModel.SelectedMainTabIndex);
+                    Assert.False(ToolbarContainsScrollViewer(window),
+                        $"Toolbar must not host a ScrollViewer at {width}x{height}.");
                 }
 
                 window.Close();
@@ -304,5 +317,17 @@ public sealed class MainWindowXamlSmokeTests
         }
 
         return null;
+    }
+
+    private static bool ToolbarContainsScrollViewer(Window window)
+    {
+        if (window.Content is not System.Windows.Controls.Grid rootGrid
+            || rootGrid.Children.Count == 0
+            || rootGrid.Children[0] is not System.Windows.Controls.Border toolbar)
+        {
+            return false;
+        }
+
+        return FindVisualDescendant<System.Windows.Controls.ScrollViewer>(toolbar) is not null;
     }
 }

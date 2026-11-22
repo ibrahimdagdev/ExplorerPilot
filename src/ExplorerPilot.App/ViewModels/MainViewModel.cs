@@ -31,6 +31,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     private readonly ISnapshotStore _snapshotStore;
     private readonly IThemeService _themeService;
     private readonly ILocalizationService _localization;
+    private readonly IApplicationInfoService _appInfo;
     private readonly UserSettingsStore _settingsStore;
     private readonly IAboutDialogService _aboutDialog;
     private readonly ISystemInformationDialogService _systemInformationDialog;
@@ -64,6 +65,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         IDriveDiscoveryService driveDiscovery,
         IThemeService themeService,
         ILocalizationService localization,
+        IApplicationInfoService appInfo,
         IAboutDialogService aboutDialog,
         ISystemInformationDialogService systemInformationDialog,
         IFileActionService fileActions,
@@ -89,6 +91,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         _settingsStore = settingsStore;
         _themeService = themeService;
         _localization = localization;
+        _appInfo = appInfo;
         _aboutDialog = aboutDialog;
         _systemInformationDialog = systemInformationDialog;
         _fileActions = fileActions;
@@ -107,6 +110,10 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
         ThemeOptions = themeService.AvailableThemes;
         LanguageOptions = localization.AvailableLanguages;
+        SettingsThemeOptions = ThemeOptions.Where(t => t.Mode is AppThemeMode.Light or AppThemeMode.Dark).ToList();
+        SettingsLanguageOptions = LanguageOptions
+            .Where(l => l.Mode is AppLanguageMode.English or AppLanguageMode.Turkish)
+            .ToList();
 
         LargestFilesLimitOptions = LargestFilesOptions.DisplayLimits
             .Select(limit => new LargestFilesLimitOption(limit))
@@ -123,10 +130,12 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         SelectedLargestFilesLimit = LargestFilesLimitOptions.First(o => o.Limit == LargestFilesOptions.DefaultDisplayLimit);
 
         BuildSidebarNavigation();
+        SyncSettingsSelectorsFromPreferences();
         _isSidebarExpanded = _settingsStore.Load().SidebarExpanded;
         SidebarWidth = _isSidebarExpanded ? ExpandedSidebarWidth : CollapsedSidebarWidth;
 
         _localization.LanguageChanged += OnLanguageChanged;
+        _themeService.ThemeChanged += OnThemeChanged;
         Treemap.NodeSelected += OnTreemapNodeSelected;
         Dashboard.NavigateToTabRequested += OnDashboardNavigateToTab;
         Dashboard.RevealPathRequested += OnDashboardRevealPath;
@@ -187,7 +196,21 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
     public IReadOnlyList<LanguageOption> LanguageOptions { get; }
 
+    /// <summary>Settings page: Light/Dark only (System preference still supported via stored settings).</summary>
+    public IReadOnlyList<ThemeOption> SettingsThemeOptions { get; }
+
+    /// <summary>Settings page: English/Turkish only.</summary>
+    public IReadOnlyList<LanguageOption> SettingsLanguageOptions { get; }
+
     public IReadOnlyList<LargestFilesLimitOption> LargestFilesLimitOptions { get; }
+
+    public IApplicationInfoService AppInfo => _appInfo;
+
+    [ObservableProperty]
+    private ThemeOption? _selectedSettingsTheme;
+
+    [ObservableProperty]
+    private LanguageOption? _selectedSettingsLanguage;
 
     public SearchTabViewModel Search { get; }
 
@@ -296,6 +319,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         }
 
         _themeService.SetPreference(value.Mode);
+        SyncSettingsSelectorsFromPreferences();
     }
 
     partial void OnSelectedLanguageChanged(LanguageOption? value)
@@ -306,6 +330,27 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         }
 
         _localization.SetPreference(value.Mode);
+        SyncSettingsSelectorsFromPreferences();
+    }
+
+    partial void OnSelectedSettingsThemeChanged(ThemeOption? value)
+    {
+        if (_suppressThemePreferenceWrite || value is null)
+        {
+            return;
+        }
+
+        SelectedTheme = ThemeOptions.First(t => t.Mode == value.Mode);
+    }
+
+    partial void OnSelectedSettingsLanguageChanged(LanguageOption? value)
+    {
+        if (_suppressLanguagePreferenceWrite || value is null)
+        {
+            return;
+        }
+
+        SelectedLanguage = LanguageOptions.First(l => l.Mode == value.Mode);
     }
 
     partial void OnSelectedLargestFilesLimitChanged(LargestFilesLimitOption? value)
@@ -340,9 +385,11 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     [ObservableProperty]
     private TreeNodeViewModel? _rootNode;
 
-    /// <summary>Workspace page index (0 Dashboard … 11 Scheduled) — kept in sync with TabControl.</summary>
+    /// <summary>Workspace page index (0 Dashboard … 11 Scheduled, 12 Settings) — kept in sync with TabControl.</summary>
     [ObservableProperty]
     private int _selectedMainTabIndex;
+
+    public const int SettingsTabIndex = 12;
 
     [ObservableProperty]
     private bool _isSidebarExpanded = true;
@@ -358,8 +405,10 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
 
     public ObservableCollection<SidebarNavSectionViewModel> NavigationSections { get; } = [];
 
+    public SidebarNavItemViewModel SettingsNavItem { get; private set; } = null!;
+
     public IEnumerable<SidebarNavItemViewModel> AllNavItems =>
-        NavigationSections.SelectMany(s => s.Items);
+        NavigationSections.SelectMany(s => s.Items).Append(SettingsNavItem);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]
@@ -1602,7 +1651,43 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
         [
             new SidebarNavItemViewModel(9, "Cleanup_Title", SidebarNavIcons.Cleanup)
         ]));
+        SettingsNavItem = new SidebarNavItemViewModel(SettingsTabIndex, "Settings_Title", SidebarNavIcons.Settings);
     }
+
+    private void SyncSettingsSelectorsFromPreferences()
+    {
+        _suppressThemePreferenceWrite = true;
+        _suppressLanguagePreferenceWrite = true;
+        try
+        {
+            var themeMode = _themeService.Preference is AppThemeMode.Light or AppThemeMode.Dark
+                ? _themeService.Preference
+                : _themeService.EffectiveTheme;
+            if (themeMode is not (AppThemeMode.Light or AppThemeMode.Dark))
+            {
+                themeMode = AppThemeMode.Light;
+            }
+
+            SelectedSettingsTheme = SettingsThemeOptions.First(t => t.Mode == themeMode);
+
+            var languageMode = _localization.Preference is AppLanguageMode.English or AppLanguageMode.Turkish
+                ? _localization.Preference
+                : _localization.EffectiveLanguage;
+            if (languageMode is not (AppLanguageMode.English or AppLanguageMode.Turkish))
+            {
+                languageMode = AppLanguageMode.English;
+            }
+
+            SelectedSettingsLanguage = SettingsLanguageOptions.First(l => l.Mode == languageMode);
+        }
+        finally
+        {
+            _suppressThemePreferenceWrite = false;
+            _suppressLanguagePreferenceWrite = false;
+        }
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) => SyncSettingsSelectorsFromPreferences();
 
     private void SyncSidebarSelection(int pageIndex)
     {
@@ -1650,9 +1735,31 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     [RelayCommand]
     private void NavigateToPage(int pageIndex)
     {
-        if (pageIndex is >= 0 and <= 11)
+        if (pageIndex is >= 0 and <= SettingsTabIndex)
         {
             SelectedMainTabIndex = pageIndex;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenRepository()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = _appInfo.RepositoryUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to open repository URL");
+            MessageBox.Show(
+                _localization.GetString("About_WebsiteOpenFailed"),
+                _localization.GetString("Settings_Title"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
         }
     }
 
@@ -1693,6 +1800,13 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
                 item.Title = _localization.GetString(item.TitleKey);
             }
         }
+
+        if (SettingsNavItem is not null)
+        {
+            SettingsNavItem.Title = _localization.GetString(SettingsNavItem.TitleKey);
+        }
+
+        SyncSettingsSelectorsFromPreferences();
 
         foreach (var option in LargestFilesLimitOptions)
         {
@@ -1984,6 +2098,7 @@ public partial class MainViewModel : ObservableObject, IDisposable, IScheduledSc
     public void Dispose()
     {
         _localization.LanguageChanged -= OnLanguageChanged;
+        _themeService.ThemeChanged -= OnThemeChanged;
         Treemap.NodeSelected -= OnTreemapNodeSelected;
         Dashboard.NavigateToTabRequested -= OnDashboardNavigateToTab;
         Dashboard.RevealPathRequested -= OnDashboardRevealPath;
