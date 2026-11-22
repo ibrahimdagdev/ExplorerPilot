@@ -35,9 +35,11 @@
 
         <!-- Header toolbar (horizontal scroll on narrow / high-DPI layouts) -->
         <Border Grid.Row="0" Style="{StaticResource ToolbarStyle}">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+            <!-- Hidden (not Auto): avoids a thin full-width scrollbar strip under the toolbar chrome. -->
+            <ScrollViewer HorizontalScrollBarVisibility="Hidden"
                           VerticalScrollBarVisibility="Disabled"
-                          Focusable="False">
+                          Focusable="False"
+                          CanContentScroll="False">
             <Grid MinWidth="980">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
